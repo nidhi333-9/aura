@@ -1,6 +1,17 @@
+import { useEffect } from "react";
 import illustration from "./assets/Events-cuate.svg";
 import GoogleButton from "./components/GoogleButton.jsx";
+import { useAuth } from "./hooks/useAuth.js";
+import { useNavigate } from "react-router-dom";
 function App() {
+  const navigate = useNavigate();
+  const { login, loading } = useAuth();
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      navigate("/dashboard", { replace: true });
+    }
+  }, [navigate]);
   return (
     <div className="min-h-screen bg-[var(--aura-light)] relative overflow-hidden bg-grid-mesh flex flex-col">
       {/* 1. NAVBAR (Fixed top) */}
@@ -8,8 +19,12 @@ function App() {
         <h1 className="logo-font text-3xl font-bold text-[var(--aura-dark)]">
           Aura
         </h1>
-        <button className="bg-[var(--aura-blue)] text-white px-5 py-2 rounded-xl shadow-md hover:scale-105 transition">
-          Login
+        <button
+          onClick={() => login()}
+          disabled={loading}
+          className="bg-[var(--aura-blue)] text-white px-5 py-2 rounded-xl shadow-md hover:scale-105 transition"
+        >
+          {loading ? "..." : "Login"}
         </button>
       </div>
 

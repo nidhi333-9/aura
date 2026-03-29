@@ -30,20 +30,17 @@ print("🛡️ Aura Core Active...")
 try:
     while True:
         app = get_window()
-
+        
+        cursor.execute(
+            "INSERT INTO activity_logs (app_name, window_title, timestamp) VALUES (?, ?, ?)",
+            (app, "Active Session", datetime.datetime.now().isoformat())
+        )
+        conn.commit()
         if app != last_app:
-            cursor.execute(
-                "INSERT INTO activity_logs (app_name, window_title, timestamp) VALUES (?, ?, ?)",
-                (app, "Active Session", datetime.datetime.now().isoformat())
-            )
-            conn.commit()
-
-            print(f"✅ Logged: {app}")
+            print(f"🎯 Switched to: {app}")
             last_app = app
-        else:
-            print(f"⏳ Skipping duplicate: {app}")
-
-        time.sleep(5)
+        
+        time.sleep(10) # Log every 10 seconds
 
 except KeyboardInterrupt:
     print("\n🛑 Aura stopped.")

@@ -1,11 +1,13 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 import sqlite3
 import pandas as pd
 import os
-
+from fastapi.responses import Response
+# Import your brain from the core folder
+from core.processor import analyze_my_flow
+from actions.youtube_api import get_dynamic_video
 app = FastAPI()
-
-from fastapi.middleware.cors import CORSMiddleware
 
 app.add_middleware(
     CORSMiddleware,
@@ -14,48 +16,38 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-BASE_DIR = os.path.dirname(__file__)
-DB_PATH = "/Users/techynidhi/Projects/aura/ml-service/data/aura.db"
-
-
-def get_data():
-    conn = sqlite3.connect(DB_PATH)
-    df = pd.read_sql_query(
-        "SELECT * FROM activity_logs ORDER BY timestamp DESC",
-        conn
-    )
-    conn.close()
-    return df
-
 
 @app.get("/analytics")
 def get_analytics():
+    # 1. Let the processor handle the math
+    stats = analyze_my_flow(limit=150)
+    
+    # 2. If processor returns an error message
+    if isinstance(stats, str):
+        return {"message": stats}
+
+    score = stats.get("focus_score", 0)
+    status = "Deep Focus" if score > 70 else "Light Work" if score > 30 else "Idle / Break"
+    video_url = get_dynamic_video(status)
+    # 3. Return the formatted data to your React Frontend
     try:
-        data = get_data()
-
-        if data.empty:
-            return {"message": "No data"}
-
-        data['timestamp'] = pd.to_datetime(data['timestamp'], errors='coerce')
-
-        focus_apps = ["Code", "VS Code", "PyCharm"]
-        focus_count = data[data['app_name'].isin(focus_apps)].shape[0]
-        focus_score = (focus_count / len(data)) * 100
-
-        app_dist = data['app_name'].value_counts().to_dict()
-
-        data['hour'] = data['timestamp'].dt.hour
-        hourly = data.groupby('hour').size().to_dict()
-
         return {
-            "total_logs": len(data),
-            "current_app": data['app_name'].iloc[0],
-            "most_used": data['app_name'].mode()[0],
-            "focus_score": round(focus_score, 2),
-            "app_distribution": app_dist,
-            "hourly_activity": hourly
+            "total_logs": stats.get("total_logs", 0),
+            "current_app": stats.get("current_app", "Unknown"),
+            "most_used": stats.get("dominant_aura", "None"),
+            "focus_score": stats.get("focus_score", 0),
+            "app_distribution": stats.get("breakdown", {}),
+            "video_url": video_url,
+            "status": status
         }
-
     except Exception as e:
-        print("🔥 FASTAPI ERROR:", str(e))
         return {"error": str(e)}
+
+@app.get("/dashboard")
+def get_dashboard():
+    # This is for your "Welcome back, Nidhi" header
+    return {"name": "Nidhi", "mca_year": 2}
+
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon():
+    return Response(status_code=204)
