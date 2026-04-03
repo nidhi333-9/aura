@@ -9,11 +9,8 @@ load_dotenv()
 YOUTUBE_API_KEY = os.getenv("YOUTUBE_API")
 
 def get_dynamic_video(mood_status):
-    # FALLBACK: If key is missing, return a default link immediately
 
     try:
-        # We only build the service INSIDE the function 
-        # so it doesn't crash the whole API on startup
         youtube = build('youtube', 'v3', developerKey=YOUTUBE_API_KEY)
         
         search_queries = {

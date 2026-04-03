@@ -17,9 +17,10 @@ export const useAuth = () => {
         const res = await axios.post("http://localhost:8080/auth/google", {
           token: tokenResponse.access_token,
         });
-        console.log(res.data);
+        console.log("aura token: ", res.data.token);
         if (res.data.token) {
           localStorage.setItem("token", res.data.token);
+          localStorage.setItem("user", JSON.stringify(res.data.user));
           navigate("/dashboard", { replace: true });
         }
       } catch (err) {
