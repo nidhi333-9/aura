@@ -36,9 +36,13 @@ router.post("/google", async (req, res) => {
         picture: user.picture,
       });
     }
-    const jwtToken = jwt.sign({ id: existingUser._id }, "secretkey", {
-      expiresIn: "7d",
-    });
+    const jwtToken = jwt.sign(
+      { id: existingUser._id },
+      process.env.JWT_SECRET || "secretkey",
+      {
+        expiresIn: "7d",
+      },
+    );
     console.log("SENDING TOKEN:", jwtToken);
     res.json({ user: existingUser, token: jwtToken });
   } catch (err) {
