@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 
@@ -27,14 +27,16 @@ const useAuraData = () => {
           axios.get("http://localhost:8080/api/analytics/daily-trend", auth),
         ]);
 
+        // 👇 Clean initial load — just set what the backend returns
         setData((prev) => ({
           ...prev,
           userData: userRes.data,
-          focusHistory: trendRes.data,
+          focusHistory: trendRes.data, // use real data from DB
           loading: false,
         }));
       } catch (err) {
         if (err.response?.status === 401) navigate("/");
+        setData((prev) => ({ ...prev, loading: false }));
       }
     };
     initLoad();
@@ -52,19 +54,28 @@ const useAuraData = () => {
           auth,
         );
 
-        setData((prev) => ({
-          ...prev,
-          analytics: res.data,
-          // We don't push to focusHistory here anymore because
-          // the "Daily Trend" is handled by the backend aggregation.
-          // However, if you want the graph to move in real-time:
-          focusHistory: prev.focusHistory.map((point, index) =>
-            // Update the very last point with the latest score
-            index === prev.focusHistory.length - 1
-              ? { ...point, score: res.data.focus_score }
-              : point,
-          ),
-        }));
+        // 👇 Append new time points here (the fix goes HERE, not in initLoad)
+        setData((prev) => {
+          const now = new Date();
+          const timeLabel = `${now.getHours()}:${String(now.getMinutes()).padStart(2, "0")}`;
+
+          const newPoint = { time: timeLabel, score: res.data.focus_score };
+          const alreadyExists = prev.focusHistory.some(
+            (p) => p.time === timeLabel,
+          );
+
+          return {
+            ...prev,
+            analytics: res.data,
+            focusHistory: alreadyExists
+              ? prev.focusHistory.map((p) =>
+                  p.time === timeLabel
+                    ? { ...p, score: res.data.focus_score }
+                    : p,
+                )
+              : [...prev.focusHistory, newPoint],
+          };
+        });
       } catch (err) {
         console.error("Live fetch error", err);
       }
@@ -94,7 +105,7 @@ const useAuraData = () => {
           }
         });
     }
-  }, [data.analytics?.focus_score]); // Only run when score changes
+  }, [data.analytics?.focus_score]);
 
   return data;
 };

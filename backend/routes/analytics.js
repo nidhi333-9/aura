@@ -3,13 +3,24 @@ const router = express.Router();
 const axios = require("axios");
 const Activity = require("../models/Activity");
 const authMiddleware = require("../middleware/authMiddleware");
+const mongoose = require("mongoose");
 
 router.get("/", authMiddleware, async (req, res) => {
+  console.log("req.user:", req.user);
   try {
     const mlData = await axios.get("http://127.0.0.1:5000/analytics", {
       timeout: 10000,
       headers: { Connection: "keep-alive" },
     });
+    const { current_app, window_title, focus_score } = mlData.data;
+    if (current_app && current_app != "No activity yet") {
+      await Activity.create({
+        user: req.user.id,
+        app_name: current_app,
+        window_title: window_title || "",
+        timestamp: new Date(),
+      }).catch((err) => console.error("Activity save error:", err.message));
+    }
     res.json(mlData.data);
   } catch (err) {
     console.error("ML ERROR:", err.message);
@@ -69,7 +80,7 @@ router.get("/daily-trend", authMiddleware, async (req, res) => {
     const activities = await Activity.aggregate([
       {
         $match: {
-          user: req.user._id,
+          user: new mongoose.Types.ObjectId(req.user.id),
           timestamp: { $gte: startOfDay },
         },
       },

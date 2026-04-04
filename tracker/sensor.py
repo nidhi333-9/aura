@@ -4,7 +4,7 @@ import requests
 import platform
 
 API_URL = "http://localhost:8080/api/log-activity" 
-USER_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5Yzc4MDMyZmUwY2Q1NTZhMzJjZjE4OSIsImlhdCI6MTc3NTIyNzg4MCwiZXhwIjoxNzc1ODMyNjgwfQ.Vig72OhI9vLqmXK7QFDAL6G7MAuYc0f1AAVSJuJ6OjM"
+USER_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5Yzc4OTVmZmUwY2Q1NTZhMzJjZjE4ZCIsImlhdCI6MTc3NTI4NDk2OCwiZXhwIjoxNzc1ODg5NzY4fQ.Xd8Nmw4EcevEpxBNUnACYiMTC6O8uLlz8DK9AeyZfrI"
 
 def get_window():
     """Returns (app_name, window_title) of the currently active window."""
