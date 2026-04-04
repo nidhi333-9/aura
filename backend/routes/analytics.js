@@ -8,10 +8,13 @@ const mongoose = require("mongoose");
 router.get("/", authMiddleware, async (req, res) => {
   console.log("req.user:", req.user);
   try {
-    const mlData = await axios.get("http://127.0.0.1:5000/analytics", {
-      timeout: 10000,
-      headers: { Connection: "keep-alive" },
-    });
+    const mlData = await axios.get(
+      "https://pacific-surprise-production-0ae5.up.railway.app/analytics",
+      {
+        timeout: 10000,
+        headers: { Connection: "keep-alive" },
+      },
+    );
     const { current_app, window_title, focus_score } = mlData.data;
     if (current_app && current_app != "No activity yet") {
       await Activity.create({
