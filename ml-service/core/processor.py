@@ -20,7 +20,7 @@ AURA_MAP = {
 
 def get_collection():
     client = MongoClient(MONGO_URI)
-    db = client["aura"]
+    db = client["test"]
     return db["activities"]  # MongoDB auto-pluralizes "Activity" → "activities"
 
 def analyze_my_flow(limit=200):
