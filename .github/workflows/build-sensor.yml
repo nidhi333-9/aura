@@ -3,16 +3,16 @@ name: Build Sensor
 on:
   push:
     tags:
-      - 'v*'
+      - "v*"
 
 jobs:
   build-mac:
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: "3.11"
       - name: Install dependencies
         run: |
           cd tracker
@@ -21,7 +21,7 @@ jobs:
         run: |
           cd tracker
           pyinstaller --onefile --name "aura-sensor-mac" sensor.py
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: aura-sensor-mac
           path: tracker/dist/aura-sensor-mac
@@ -29,10 +29,10 @@ jobs:
   build-windows:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-python@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: "3.11"
       - name: Install dependencies
         run: |
           cd tracker
@@ -41,7 +41,7 @@ jobs:
         run: |
           cd tracker
           pyinstaller --onefile --name "aura-sensor-windows" sensor.py
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: aura-sensor-windows
           path: tracker/dist/aura-sensor-windows.exe
