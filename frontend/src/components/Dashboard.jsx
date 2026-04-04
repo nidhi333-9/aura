@@ -18,20 +18,16 @@ const Dashboard = () => {
     navigate("/", { replace: true });
   };
 
-  if (loading) {
+  if (loading || !analytics) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[var(--aura-light)] bg-grid-mesh">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 to-purple-50">
         <div className="text-center">
-          <div className="w-12 h-12 border-4 border-[var(--aura-blue)] border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-[var(--aura-dark)] font-bold italic tracking-tight">
-            Syncing your Aura...
-          </p>
+          <div className="w-12 h-12 border-4 border-indigo-200 border-t-indigo-500 rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-indigo-400 font-medium">Syncing With Aura...</p>
         </div>
       </div>
     );
   }
-
-  if (!analytics) return null;
 
   return (
     <div className="min-h-screen bg-[var(--aura-light)] bg-grid-mesh relative overflow-hidden flex flex-col font-sans">
@@ -127,7 +123,9 @@ const Dashboard = () => {
 
             <div className="flex-grow w-full">
               {focusHistory && focusHistory.length > 0 ? (
-                <FocusChart data={focusHistory} />
+                <div className="h-[300px] w-full min-h-[300px] min-w-0">
+                  <FocusChart data={focusHistory} />
+                </div>
               ) : (
                 <div className="h-full flex flex-col items-center justify-center text-gray-400">
                   <div className="w-8 h-8 border-2 border-gray-200 border-t-[var(--aura-blue)] rounded-full animate-spin mb-4"></div>
