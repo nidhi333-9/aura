@@ -14,20 +14,32 @@ export const useAuth = () => {
       setLoading(true);
       console.log("Sending token:", tokenResponse);
       try {
-        const res = await axios.post("https://aura-production-f392.up.railway.app/auth/google", {
-          token: tokenResponse.access_token,
-        });
+        const res = await axios.post(
+          "https://aura-production-f392.up.railway.app/auth/google",
+          {
+            token: tokenResponse.access_token,
+          },
+        );
         console.log("aura token: ", res.data.token);
         if (res.data.token) {
           localStorage.setItem("token", res.data.token);
           localStorage.setItem("user", JSON.stringify(res.data.user));
-          try {
-            await axios.post("https://aura-production-f392.up.railway.app/save-token", {
-              token: res.data.token,
-            });
-          } catch (err) {
-            console.warn("Could not save token for sensor: ", err.message);
+          const params = new URLSearchParams(window.location.search);
+          const callback = params.get("callback");
+          if (callback) {
+            window.location.href = `${callback}?token=${res.data.token}`;
+            return;
           }
+          // try {
+          //   await axios.post(
+          //     "https://aura-production-f392.up.railway.app/save-token",
+          //     {
+          //       token: res.data.token,
+          //     },
+          //   );
+          // } catch (err) {
+          //   console.warn("Could not save token for sensor: ", err.message);
+          // }
           navigate("/dashboard", { replace: true });
         }
       } catch (err) {
