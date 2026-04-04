@@ -132,57 +132,88 @@ function App() {
       </div>
 
       {/* DOWNLOAD SECTION */}
-      <div className="relative z-30 max-w-6xl mx-auto mb-24 px-4 w-full">
-        <div className="bg-[#1a1a1a] rounded-[40px] p-10 md:p-14 text-white shadow-2xl border border-white/5">
-          {/* Header */}
-          <div className="text-center mb-10">
-            <h2 className="text-4xl font-extrabold mb-4">
-              Get Started in 3 Steps
+      {/* DOWNLOAD SECTION */}
+      <div className="relative z-30 max-w-5xl mx-auto mb-32 px-4 w-full">
+        <div className="bg-white/40 backdrop-blur-xl rounded-[48px] p-8 md:p-16 border border-white/60 shadow-[0_20px_50px_rgba(0,0,0,0.05)]">
+          {/* Header - More compact and modern */}
+          <div className="max-w-2xl mx-auto text-center mb-16">
+            <span className="text-[var(--aura-blue)] font-bold tracking-widest uppercase text-xs bg-[var(--aura-blue)]/10 px-4 py-2 rounded-full">
+              Quick Setup
+            </span>
+            <h2 className="text-4xl font-black text-[var(--aura-dark)] mt-6 mb-4">
+              Ready to find your flow?
             </h2>
-            <p className="text-gray-400 text-lg">
-              Download the sensor, login, and watch your focus come alive.
+            <p className="text-gray-500 font-medium">
+              Set up Aura in less than two minutes.
             </p>
           </div>
 
-          {/* Steps Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
-            <div className="text-center">
-              <div className="text-4xl mb-4">1️⃣</div>
-              <h3 className="font-bold mb-2">Login with Google</h3>
-              <p className="text-gray-400 text-sm">
-                Click the login button above to create your account.
-              </p>
-            </div>
-            <div className="text-center">
-              <div className="text-4xl mb-4">2️⃣</div>
-              <h3 className="font-bold mb-2">Download Sensor</h3>
-              <p className="text-gray-400 text-sm">
-                Download the sensor for your operating system below.
-              </p>
-            </div>
-            <div className="text-center">
-              <div className="text-4xl mb-4">3️⃣</div>
-              <h3 className="font-bold mb-2">Run & Track</h3>
-              <p className="text-gray-400 text-sm">
-                Run the sensor and watch your dashboard come alive!
-              </p>
-            </div>
+          {/* Steps - Horizontal flow with indicators */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-12 relative mb-16">
+            {/* Visual Connector Line (Hidden on mobile) */}
+            <div className="hidden md:block absolute top-12 left-[15%] right-[15%] h-[2px] bg-gradient-to-r from-transparent via-gray-200 to-transparent -z-10"></div>
+
+            {[
+              {
+                step: "01",
+                title: "Authenticate",
+                desc: "Login with Google",
+                icon: "👤",
+              },
+              {
+                step: "02",
+                title: "Install",
+                desc: "Download the sensor",
+                icon: "💾",
+              },
+              {
+                step: "03",
+                title: "Analyze",
+                desc: "Run and see insights",
+                icon: "🚀",
+              },
+            ].map((item, idx) => (
+              <div key={idx} className="flex flex-col items-center group">
+                <div className="w-16 h-16 bg-white rounded-2xl shadow-sm border border-gray-100 flex items-center justify-center text-2xl mb-6 group-hover:scale-110 transition-transform duration-300">
+                  {item.icon}
+                </div>
+                <span className="text-[var(--aura-blue)] font-black text-xs mb-1">
+                  {item.step}
+                </span>
+                <h3 className="font-bold text-[var(--aura-dark)] text-lg">
+                  {item.title}
+                </h3>
+                <p className="text-gray-400 text-sm mt-1">{item.desc}</p>
+              </div>
+            ))}
           </div>
 
-          {/* Download Buttons */}
-          <div className="flex flex-col md:flex-row gap-4 justify-center">
+          {/* Modernized Buttons */}
+          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
             <a
               href="https://github.com/nidhi333-9/aura/releases/download/v1.0.0/aura-sensor-mac"
-              className="flex items-center gap-3 bg-white/10 hover:bg-white/20 px-8 py-4 rounded-2xl transition font-bold text-center justify-center"
+              className="group relative flex items-center gap-3 bg-[var(--aura-dark)] text-white px-10 py-4 rounded-2xl hover:bg-black transition-all duration-300 shadow-xl"
             >
-              🍎 Download for Mac
+              <span className="text-xl">🍎</span>
+              <div className="flex flex-col items-start">
+                <span className="text-[10px] opacity-60 uppercase font-bold leading-none">
+                  Download for
+                </span>
+                <span className="font-bold">macOS</span>
+              </div>
             </a>
 
             <a
               href="https://github.com/nidhi333-9/aura/releases/download/v1.0.0/aura-sensor-windows.exe"
-              className="flex items-center gap-3 bg-[#3b82f6] hover:opacity-90 px-8 py-4 rounded-2xl transition font-bold text-center justify-center"
+              className="group relative flex items-center gap-3 bg-[var(--aura-blue)] text-white px-10 py-4 rounded-2xl hover:brightness-110 transition-all duration-300 shadow-xl shadow-blue-500/20"
             >
-              🪟 Download for Windows
+              <span className="text-xl">🪟</span>
+              <div className="flex flex-col items-start">
+                <span className="text-[10px] opacity-70 uppercase font-bold leading-none">
+                  Download for
+                </span>
+                <span className="font-bold">Windows</span>
+              </div>
             </a>
           </div>
         </div>
