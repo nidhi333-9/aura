@@ -131,6 +131,62 @@ function App() {
         </div>
       </div>
 
+      {/* DOWNLOAD SECTION */}
+      <div className="relative z-30 max-w-6xl mx-auto mb-24 px-4 w-full">
+        <div className="bg-[#1a1a1a] rounded-[40px] p-10 md:p-14 text-white shadow-2xl border border-white/5">
+          {/* Header */}
+          <div className="text-center mb-10">
+            <h2 className="text-4xl font-extrabold mb-4">
+              Get Started in 3 Steps
+            </h2>
+            <p className="text-gray-400 text-lg">
+              Download the sensor, login, and watch your focus come alive.
+            </p>
+          </div>
+
+          {/* Steps Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+            <div className="text-center">
+              <div className="text-4xl mb-4">1️⃣</div>
+              <h3 className="font-bold mb-2">Login with Google</h3>
+              <p className="text-gray-400 text-sm">
+                Click the login button above to create your account.
+              </p>
+            </div>
+            <div className="text-center">
+              <div className="text-4xl mb-4">2️⃣</div>
+              <h3 className="font-bold mb-2">Download Sensor</h3>
+              <p className="text-gray-400 text-sm">
+                Download the sensor for your operating system below.
+              </p>
+            </div>
+            <div className="text-center">
+              <div className="text-4xl mb-4">3️⃣</div>
+              <h3 className="font-bold mb-2">Run & Track</h3>
+              <p className="text-gray-400 text-sm">
+                Run the sensor and watch your dashboard come alive!
+              </p>
+            </div>
+          </div>
+
+          {/* Download Buttons */}
+          <div className="flex flex-col md:flex-row gap-4 justify-center">
+            <a
+              href="https://github.com/nidhi333-9/aura/releases/download/v1.0.0/aura-sensor-mac"
+              className="flex items-center gap-3 bg-white/10 hover:bg-white/20 px-8 py-4 rounded-2xl transition font-bold text-center justify-center"
+            >
+              🍎 Download for Mac
+            </a>
+
+            <a
+              href="https://github.com/nidhi333-9/aura/releases/download/v1.0.0/aura-sensor-windows.exe"
+              className="flex items-center gap-3 bg-[#3b82f6] hover:opacity-90 px-8 py-4 rounded-2xl transition font-bold text-center justify-center"
+            >
+              🪟 Download for Windows
+            </a>
+          </div>
+        </div>
+      </div>
       {/* 5. FOOTER */}
       <div className="w-full text-center text-xs text-gray-400 pb-8">
         Aura © 2026. Respecting your privacy is our priority 🔒
