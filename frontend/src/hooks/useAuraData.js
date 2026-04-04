@@ -23,8 +23,8 @@ const useAuraData = () => {
       try {
         const auth = { headers: { Authorization: `Bearer ${token}` } };
         const [userRes, trendRes] = await Promise.all([
-          axios.get("http://localhost:8080/dashboard", auth),
-          axios.get("http://localhost:8080/api/analytics/daily-trend", auth),
+          axios.get("https://aura-production-f392.up.railway.app/dashboard", auth),
+          axios.get("https://aura-production-f392.up.railway.app/api/analytics/daily-trend", auth),
         ]);
 
         // 👇 Clean initial load — just set what the backend returns
@@ -50,7 +50,7 @@ const useAuraData = () => {
       try {
         const auth = { headers: { Authorization: `Bearer ${token}` } };
         const res = await axios.get(
-          "http://localhost:8080/api/analytics",
+          "https://aura-production-f392.up.railway.app/api/analytics",
           auth,
         );
 
@@ -94,7 +94,7 @@ const useAuraData = () => {
 
     if (newCat !== data.category) {
       axios
-        .get(`http://localhost:8080/api/youtube-recommendation?type=${newCat}`)
+        .get(`https://aura-production-f392.up.railway.app/api/youtube-recommendation?type=${newCat}`)
         .then((res) => {
           if (res.data && res.data.length > 0) {
             setData((prev) => ({

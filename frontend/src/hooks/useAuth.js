@@ -14,7 +14,7 @@ export const useAuth = () => {
       setLoading(true);
       console.log("Sending token:", tokenResponse);
       try {
-        const res = await axios.post("http://localhost:8080/auth/google", {
+        const res = await axios.post("https://aura-production-f392.up.railway.app/auth/google", {
           token: tokenResponse.access_token,
         });
         console.log("aura token: ", res.data.token);
@@ -22,7 +22,7 @@ export const useAuth = () => {
           localStorage.setItem("token", res.data.token);
           localStorage.setItem("user", JSON.stringify(res.data.user));
           try {
-            await axios.post("http://localhost:8080/save-token", {
+            await axios.post("https://aura-production-f392.up.railway.app/save-token", {
               token: res.data.token,
             });
           } catch (err) {
