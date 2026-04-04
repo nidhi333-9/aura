@@ -2,9 +2,17 @@ import time
 import pywinctl as pwc
 import requests
 import platform
-
+import os
+import json
 API_URL = "http://localhost:8080/api/log-activity" 
-USER_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5Yzc4OTVmZmUwY2Q1NTZhMzJjZjE4ZCIsImlhdCI6MTc3NTI4NDk2OCwiZXhwIjoxNzc1ODg5NzY4fQ.Xd8Nmw4EcevEpxBNUnACYiMTC6O8uLlz8DK9AeyZfrI"
+# USER_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY5Yzc4OTVmZmUwY2Q1NTZhMzJjZjE4ZCIsImlhdCI6MTc3NTI4NDk2OCwiZXhwIjoxNzc1ODg5NzY4fQ.Xd8Nmw4EcevEpxBNUnACYiMTC6O8uLlz8DK9AeyZfrI"
+TOKEN_FILE = os.path.join(os.path.expanduser("~"), ".aura_token")
+
+def load_token():
+    if os.path.exists(TOKEN_FILE):
+        with open(TOKEN_FILE, "r") as f:
+            return json.load(f).get("token")
+    return None
 
 def get_window():
     """Returns (app_name, window_title) of the currently active window."""
@@ -21,6 +29,13 @@ def get_window():
 
 
 def start_sensor():
+    token = load_token()
+    if not token:
+        print("No token found.")
+        print("Please login at your Aura dashboard first")
+        return
+    
+
     print(f"🛡️ Aura Sensor Active on {platform.system()}...")
     last_app = None
 
@@ -38,7 +53,7 @@ def start_sensor():
                 response = requests.post(
                     API_URL,
                     json=payload,
-                    headers={"Authorization": f"Bearer {USER_TOKEN}"},
+                    headers={"Authorization": f"Bearer {token}"},
                     timeout=5
                 )
 

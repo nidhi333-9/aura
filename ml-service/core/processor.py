@@ -1,8 +1,8 @@
 import pandas as pd
 from pymongo import MongoClient
 from datetime import datetime, timezone
-
-MONGO_URI = "mongodb://localhost:27017/aura"
+import os
+MONGO_URI = os.environ.get("MONGO_URI", "mongodb://localhost:27017/aura")
 AURA_MAP = {
     'Code':                 'Coding (VS Code)',
     'Visual Studio Code':   'Coding (VS Code)',

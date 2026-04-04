@@ -10,7 +10,7 @@ app.use(express.json());
 const connectDB = require("./config/db");
 connectDB();
 app.use("/auth", require("./routes/auth"));
-
+app.use("/", require("./routes/saveToken.js"));
 const analyticsRoutes = require("./routes/analytics");
 app.use("/dashboard", require("./routes/dashboard"));
 app.use("/api/analytics", analyticsRoutes);
