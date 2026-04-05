@@ -47,22 +47,22 @@ function App() {
         <GoogleButton />
       </div>
 
-      {/* 3. THE CENTRAL VISUAL STACK (Dedicated height to prevent overlap) */}
-      <div className="relative w-full max-w-7xl mx-auto h-[550px] z-10">
+      {/* 3. THE CENTRAL VISUAL STACK */}
+      <div className="relative w-full max-w-7xl mx-auto min-h-[300px] md:h-[550px] z-10 flex items-center justify-center">
         {/* BACKGROUND GLOW */}
-        <div className="absolute w-[600px] h-[600px] bg-[var(--aura-green)] opacity-10 blur-[150px] rounded-full left-1/2 -translate-x-1/2 top-0 -z-20"></div>
+        <div className="absolute w-[300px] h-[300px] md:w-[600px] md:h-[600px] bg-[var(--aura-green)] opacity-10 blur-[100px] md:blur-[150px] rounded-full left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 -z-20"></div>
 
-        {/* MAIN ILLUSTRATION (Z-index 0) */}
-        <div className="absolute left-1/2 -translate-x-1/2 top-0 w-full max-w-2xl flex justify-center z-0">
+        {/* MAIN ILLUSTRATION */}
+        <div className="**relative md:absolute** **md:left-1/2** **-translate-x-0 md:-translate-x-1/2** top-0 w-full max-w-2xl flex justify-center z-0 **mt-10 md:mt-0**">
           <img
             src={illustration}
             alt="Aura Illustration"
-            className="w-[80%] h-auto drop-shadow-[0_35px_35px_rgba(14,165,233,0.15)] animate-float"
+            className="w-[70%] md:w-[80%] h-auto drop-shadow-[0_35px_35px_rgba(14,165,233,0.15)] animate-float"
           />
         </div>
 
-        {/* FLOATING CARDS (Z-index 10 to stay above image) */}
-        <div className="absolute left-[5%] top-[15%] bg-white/70 backdrop-blur-lg p-6 rounded-3xl shadow-xl w-64 border border-white/20 z-10 rotate-[-4deg]">
+        {/* FLOATING CARDS - Hidden on small screens, shown from Medium (768px) up */}
+        <div className="hidden md:block absolute left-[5%] top-[15%] bg-white/70 backdrop-blur-lg p-6 rounded-3xl shadow-xl w-64 border border-white/20 z-10 rotate-[-4deg]">
           <h2 className="text-3xl font-bold text-[var(--aura-blue)] mb-2">
             Spotify 🎶
           </h2>
@@ -72,7 +72,7 @@ function App() {
           </p>
         </div>
 
-        <div className="absolute right-[5%] top-[20%] bg-white/70 backdrop-blur-lg p-5 rounded-3xl shadow-2xl w-72 z-10 rotate-[5deg] scale-105 border border-white/20">
+        <div className="hidden md:block absolute right-[5%] top-[20%] bg-white/70 backdrop-blur-lg p-5 rounded-3xl shadow-2xl w-72 z-10 rotate-[5deg] scale-105 border border-white/20">
           <h2 className="text-3xl font-bold text-[#FF0000] mb-2">YouTube ▶️</h2>
           <p className="text-sm font-semibold mb-1">
             Smart video recommendations
