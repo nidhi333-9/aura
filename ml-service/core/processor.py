@@ -18,10 +18,38 @@ AURA_MAP = {
     'Finder':               'System Work',
 }
 
+
 def get_collection():
     client = MongoClient(MONGO_URI)
     db = client["test"]
     return db["activities"]  # MongoDB auto-pluralizes "Activity" → "activities"
+
+# Add this function in processor.py
+def get_category(app_name, window_title=""):
+    window_title = window_title.lower()
+    
+    # Check productive websites by window title
+    productive_sites = [
+        "leetcode", "github", "stackoverflow", "geeksforgeeks",
+        "hackerrank", "codeforces", "w3schools", "mdn", "docs",
+        "tutorial", "coursera", "udemy", "youtube"
+    ]
+    
+    coding_apps = [
+        "Visual Studio Code", "Cursor", "Code", "Terminal",
+        "iTerm2", "Postman", "IntelliJ", "PyCharm"
+    ]
+    
+    if app_name in coding_apps:
+        return "Coding (VS Code)"
+    
+    if app_name in ["Google Chrome", "Safari", "Firefox", "Brave"]:
+        # Check if doing something productive in browser
+        if any(site in window_title for site in productive_sites):
+            return "Coding (VS Code)"  # Count as productive
+        return "Research/Web"
+    
+    return AURA_MAP.get(app_name, "General/Other")
 
 def analyze_my_flow(limit=200):
     try:
@@ -40,7 +68,7 @@ def analyze_my_flow(limit=200):
         df = pd.DataFrame(docs)
 
         # Map app names to categories
-        df['Category'] = df['app_name'].map(AURA_MAP).fillna('General/Other')
+        df['Category'] = df.apply(lambda row: get_category(row['app_name'], row.get('window_title', '')), axis=1)
 
         # Dominant aura = most frequent category
         dominant_aura = df['Category'].mode()[0]
@@ -85,7 +113,7 @@ def get_hourly_stats():
 
         df = pd.DataFrame(docs)
         df['timestamp'] = pd.to_datetime(df['timestamp'], utc=True)
-        df['Category'] = df['app_name'].map(AURA_MAP).fillna('General/Other')
+        df['Category'] = df.apply(lambda row: get_category(row['app_name'], row.get('window_title', '')), axis=1)
 
         focus_apps = ['Coding (VS Code)', 'System Work']
         df['is_focus'] = df['Category'].isin(focus_apps).astype(int)
