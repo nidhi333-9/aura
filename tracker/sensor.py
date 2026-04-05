@@ -105,7 +105,7 @@ def start_sensor(token):
     try:
         while True:
             current_app, current_title = get_window()
-            print(f"Sending: app={current_app}, title={current_title}")
+            # print(f"Sending: app={current_app}, title={current_title}")
             payload = {
                 "app_name": current_app,
                 "window_title": current_title,
