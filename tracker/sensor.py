@@ -101,11 +101,11 @@ def get_window():
 def start_sensor(token):
     print(f"\n🛡️ Aura Sensor Active on {platform.system()}...")
     last_app = None
-
+   
     try:
         while True:
             current_app, current_title = get_window()
-
+            print(f"Sending: app={current_app}, title={current_title}")
             payload = {
                 "app_name": current_app,
                 "window_title": current_title,

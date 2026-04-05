@@ -51,11 +51,11 @@ def get_category(app_name, window_title=""):
     
     return AURA_MAP.get(app_name, "General/Other")
 
-def analyze_my_flow(limit=200):
+def analyze_my_flow(limit=50):
     try:
         collection = get_collection()
         docs = list(collection.find().sort("timestamp", -1).limit(limit))
-
+        docs = [d for d in docs if d.get('app_name') not in ['Desktop', 'Unknown']]
         if not docs:
             return {
                 "current_app": "No Activity",
