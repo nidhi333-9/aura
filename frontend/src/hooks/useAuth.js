@@ -15,7 +15,7 @@ export const useAuth = () => {
       console.log("Sending token:", tokenResponse);
       try {
         const res = await axios.post(
-          "https://aura-production-f392.up.railway.app/auth/google",
+          "https://aura-3bff.onrender.com/auth/google",
           {
             token: tokenResponse.access_token,
           },
