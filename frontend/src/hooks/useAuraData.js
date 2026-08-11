@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-
+const API_URL = import.meta.env.VITE_API_URL;
 const useAuraData = () => {
   const navigate = useNavigate();
   const [data, setData] = useState({
@@ -23,8 +23,8 @@ const useAuraData = () => {
       try {
         const auth = { headers: { Authorization: `Bearer ${token}` } };
         const [userRes, trendRes] = await Promise.all([
-          axios.get("https://aura-production-f392.up.railway.app/dashboard", auth),
-          axios.get("https://aura-production-f392.up.railway.app/api/analytics/daily-trend", auth),
+          axios.get(`${API_URL}/dashboard`, auth),
+          axios.get(`${API_URL}/api/analytics/daily-trend`, auth),
         ]);
 
         // 👇 Clean initial load — just set what the backend returns
@@ -49,10 +49,7 @@ const useAuraData = () => {
     const fetchLiveStats = async () => {
       try {
         const auth = { headers: { Authorization: `Bearer ${token}` } };
-        const res = await axios.get(
-          "https://aura-production-f392.up.railway.app/api/analytics",
-          auth,
-        );
+        const res = await axios.get(`${API_URL}/api/analytics`, auth);
 
         // 👇 Append new time points here (the fix goes HERE, not in initLoad)
         setData((prev) => {
@@ -94,7 +91,7 @@ const useAuraData = () => {
 
     if (newCat !== data.category) {
       axios
-        .get(`https://aura-production-f392.up.railway.app/api/youtube-recommendation?type=${newCat}`)
+        .get(`${API_URL}/api/youtube-recommendation?type=${newCat}`)
         .then((res) => {
           if (res.data && res.data.length > 0) {
             setData((prev) => ({
