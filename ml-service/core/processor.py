@@ -21,9 +21,8 @@ AURA_MAP = {
 
 def get_collection():
     client = MongoClient(MONGO_URI)
-    db = client["test"]
-    return db["activities"]  # MongoDB auto-pluralizes "Activity" → "activities"
-
+    db = client.get_default_database()
+    return db["activities"]
 # Add this function in processor.py
 def get_category(app_name, window_title=""):
     window_title = window_title.lower()
