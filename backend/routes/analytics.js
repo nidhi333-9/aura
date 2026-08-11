@@ -9,7 +9,7 @@ router.get("/", authMiddleware, async (req, res) => {
   console.log("req.user:", req.user);
   try {
     const mlData = await axios.get(
-      "https://pacific-surprise-production-0ae5.up.railway.app/analytics",
+      "https://aura-ml-hshh.onrender.com/analytics",
       {
         timeout: 10000,
         headers: { Connection: "keep-alive" },

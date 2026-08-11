@@ -15,7 +15,7 @@ export const useAuth = () => {
       console.log("Sending token:", tokenResponse);
       try {
         const res = await axios.post(
-          "https://aura-3bff.onrender.com/auth/google",
+          "https://aura-backend-hmq3.onrender.com/auth/google",
           {
             token: tokenResponse.access_token,
           },

@@ -9,7 +9,7 @@ import threading
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
 
-API_URL = "https://aura-production-f392.up.railway.app"
+API_URL = "https://aura-backend-hmq3.onrender.com"
 TOKEN_FILE = os.path.join(os.path.expanduser("~"), ".aura_token")
 token_received = threading.Event()
 received_token = {"value": None}
