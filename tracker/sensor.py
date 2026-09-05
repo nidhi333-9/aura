@@ -6,6 +6,7 @@ import os
 import json
 import webbrowser
 import threading
+from datetime import datetime, timezone
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import urlparse, parse_qs
 
@@ -36,11 +37,10 @@ class TokenHandler(BaseHTTPRequestHandler):
             self.end_headers()
 
     def log_message(self, format, *args):
-        pass  # Suppress server logs
+        pass
 
 
 def wait_for_token():
-    """Start local server to receive token from browser."""
     server = HTTPServer(("localhost", 9999), TokenHandler)
     server.timeout = 1
     print("⏳ Waiting for login...")
@@ -60,7 +60,6 @@ def load_token():
 
 
 def verify_token(token):
-    """Check if token is still valid."""
     try:
         res = requests.get(f"{API_URL}/dashboard",
                           headers={"Authorization": f"Bearer {token}"},
@@ -77,12 +76,10 @@ def get_valid_token():
         print("✅ Token loaded successfully!")
         return token
 
-    # Token missing or expired — open browser for login
     print("🔐 Login required. Opening browser...")
     login_url = f"https://aura-gamma-eight.vercel.app?callback=http://localhost:9999"
     webbrowser.open(login_url)
 
-    # Wait for token from browser
     wait_for_token()
     return received_token["value"]
 
@@ -101,15 +98,14 @@ def get_window():
 def start_sensor(token):
     print(f"\n🛡️ Aura Sensor Active on {platform.system()}...")
     last_app = None
-   
+
     try:
         while True:
             current_app, current_title = get_window()
-            # print(f"Sending: app={current_app}, title={current_title}")
             payload = {
                 "app_name": current_app,
                 "window_title": current_title,
-                "timestamp": time.strftime("%Y-%m-%dT%H:%M:%S")
+                "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
             }
 
             try:
