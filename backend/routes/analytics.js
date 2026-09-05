@@ -5,34 +5,25 @@ const Activity = require("../models/Activity");
 const authMiddleware = require("../middleware/authMiddleware");
 const mongoose = require("mongoose");
 
+const ML_URL = "https://aura-ml-hshh.onrender.com";
+
 router.get("/", authMiddleware, async (req, res) => {
-  console.log("req.user:", req.user);
   try {
     const mlData = await axios.get(
-      "https://aura-ml-hshh.onrender.com/analytics",
+      `${ML_URL}/analytics?user_id=${req.user.id}`,
       {
         timeout: 10000,
         headers: { Connection: "keep-alive" },
       },
     );
-    const { current_app, window_title, focus_score } = mlData.data;
-    if (current_app && current_app != "No activity yet") {
-      await Activity.create({
-        user: req.user.id,
-        app_name: current_app,
-        window_title: window_title || "",
-        timestamp: new Date(),
-      }).catch((err) => console.error("Activity save error:", err.message));
-    }
     res.json(mlData.data);
   } catch (err) {
     console.error("ML ERROR:", err.message);
 
-    // Fallback: query MongoDB directly if ML service is down
     try {
       const since = new Date(Date.now() - 60 * 60 * 1000);
       const activities = await Activity.find({
-        user: req.user._id,
+        user: req.user.id,
         timestamp: { $gte: since },
       }).sort({ timestamp: -1 });
 
@@ -45,7 +36,6 @@ router.get("/", authMiddleware, async (req, res) => {
       }
 
       const current_app = activities[0].app_name;
-
       const appCount = {};
       activities.forEach(({ app_name }) => {
         appCount[app_name] = (appCount[app_name] || 0) + 1;
@@ -76,54 +66,72 @@ router.get("/", authMiddleware, async (req, res) => {
 });
 
 router.get("/daily-trend", authMiddleware, async (req, res) => {
-  console.log("HIT: Daily Trend route reached!");
   try {
-    const startOfDay = new Date();
-    startOfDay.setHours(0, 0, 0, 0);
-    const activities = await Activity.aggregate([
-      {
-        $match: {
-          user: new mongoose.Types.ObjectId(req.user.id),
-          timestamp: { $gte: startOfDay },
+    const mlData = await axios.get(
+      `${ML_URL}/hourly-trend?user_id=${req.user.id}`,
+      { timeout: 10000 },
+    );
+
+    if (!Array.isArray(mlData.data)) {
+      throw new Error("ML service returned an unexpected shape");
+    }
+
+    const formatted = mlData.data.map((item) => ({
+      time: item.hour,
+      score: item.score,
+    }));
+    return res.json(formatted);
+  } catch (err) {
+    console.error("HOURLY TREND ML ERROR:", err.message);
+
+    try {
+      const startOfDay = new Date();
+      startOfDay.setHours(0, 0, 0, 0);
+      const activities = await Activity.aggregate([
+        {
+          $match: {
+            user: new mongoose.Types.ObjectId(req.user.id),
+            timestamp: { $gte: startOfDay },
+          },
         },
-      },
-      {
-        $group: {
-          _id: { $hour: "$timestamp" },
-          focusPoints: {
-            $sum: {
-              $cond: [
-                {
-                  $in: [
-                    "$app_name",
-                    [
-                      "Visual Studio Code",
-                      "Cursor",
-                      "Terminal",
-                      "Postman",
-                      "IntelliJ",
+        {
+          $group: {
+            _id: { $hour: "$timestamp" },
+            focusPoints: {
+              $sum: {
+                $cond: [
+                  {
+                    $in: [
+                      "$app_name",
+                      [
+                        "Visual Studio Code",
+                        "Cursor",
+                        "Terminal",
+                        "Postman",
+                        "IntelliJ",
+                      ],
                     ],
-                  ],
-                },
-                10,
-                2,
-              ],
+                  },
+                  10,
+                  2,
+                ],
+              },
             },
           },
         },
-      },
-      { $sort: { _id: 1 } },
-    ]);
+        { $sort: { _id: 1 } },
+      ]);
 
-    const formattedData = activities.map((item) => ({
-      time: `${item._id}:00`,
-      score: Math.min(Math.max(Math.round(item.focusPoints / 5), 20), 100),
-    }));
+      const formattedData = activities.map((item) => ({
+        time: `${item._id}:00`,
+        score: Math.min(Math.max(Math.round(item.focusPoints / 5), 20), 100),
+      }));
 
-    res.json(formattedData);
-  } catch (err) {
-    console.error("DB AGGREGATION ERROR:", err.message);
-    res.status(500).json({ error: "Could not fetch history" });
+      res.json(formattedData);
+    } catch (fallbackErr) {
+      console.error("DB AGGREGATION ERROR:", fallbackErr.message);
+      res.status(500).json({ error: "Could not fetch history" });
+    }
   }
 });
 
