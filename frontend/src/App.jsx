@@ -8,7 +8,15 @@ function App() {
   const { login, loading } = useAuth();
   useEffect(() => {
     const token = localStorage.getItem("token");
+    const callback = new URLSearchParams(window.location.search).get(
+      "callback",
+    );
+
     if (token) {
+      if (callback) {
+        window.location.href = `${callback}?token=${token}`; // hand it back to the sensor
+        return;
+      }
       navigate("/dashboard", { replace: true });
     }
   }, [navigate]);

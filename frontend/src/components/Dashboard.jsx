@@ -5,7 +5,7 @@ import FocusChart from "./FocusChart";
 import StatCard from "./StatCard";
 import { useState } from "react";
 import { LogOut, LayoutDashboard, Zap, Target, Activity } from "lucide-react";
-
+import TopSites from "./TopSites";
 const Dashboard = () => {
   const navigate = useNavigate();
   const { userData, analytics, loading, focusHistory, video, category } =
@@ -104,7 +104,10 @@ const Dashboard = () => {
             color="var(--aura-green)"
           />
         </div>
-
+        {/* TOP APPS & SITES */}
+        <div className="mb-12">
+          <TopSites topSites={analytics?.top_sites} />
+        </div>
         {/* 3. MAIN CONTENT STACK */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 mb-12">
           {/* Focus Trends - Glass Card */}
