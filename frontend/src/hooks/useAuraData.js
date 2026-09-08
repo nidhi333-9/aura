@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 const API_URL = import.meta.env.VITE_API_URL;
+
 const useAuraData = () => {
   const navigate = useNavigate();
   const [data, setData] = useState({
@@ -15,7 +16,7 @@ const useAuraData = () => {
 
   const token = localStorage.getItem("token");
 
-  // 1. Initial Load: User Info + Full Day Trend
+  // 1. Initial load
   useEffect(() => {
     if (!token) return navigate("/", { replace: true });
 
@@ -27,11 +28,10 @@ const useAuraData = () => {
           axios.get(`${API_URL}/api/analytics/daily-trend`, auth),
         ]);
 
-        // 👇 Clean initial load — just set what the backend returns
         setData((prev) => ({
           ...prev,
           userData: userRes.data,
-          focusHistory: trendRes.data, // use real data from DB
+          focusHistory: trendRes.data,
           loading: false,
         }));
       } catch (err) {
@@ -42,7 +42,7 @@ const useAuraData = () => {
     initLoad();
   }, [token, navigate]);
 
-  // 2. Live Polling: Fetch Current Analytics every 5s
+  // 2. Live stat cards — every 5s
   useEffect(() => {
     if (!token || data.loading) return;
 
@@ -50,45 +50,43 @@ const useAuraData = () => {
       try {
         const auth = { headers: { Authorization: `Bearer ${token}` } };
         const res = await axios.get(`${API_URL}/api/analytics`, auth);
-
-        // 👇 Append new time points here (the fix goes HERE, not in initLoad)
-        setData((prev) => {
-          const now = new Date();
-          const timeLabel = `${now.getHours()}:${String(now.getMinutes()).padStart(2, "0")}`;
-
-          const newPoint = { time: timeLabel, score: res.data.focus_score };
-          const alreadyExists = prev.focusHistory.some(
-            (p) => p.time === timeLabel,
-          );
-
-          return {
-            ...prev,
-            analytics: res.data,
-            focusHistory: alreadyExists
-              ? prev.focusHistory.map((p) =>
-                  p.time === timeLabel
-                    ? { ...p, score: res.data.focus_score }
-                    : p,
-                )
-              : [...prev.focusHistory, newPoint],
-          };
-        });
+        setData((prev) => ({ ...prev, analytics: res.data }));
       } catch (err) {
         console.error("Live fetch error", err);
       }
     };
 
+    fetchLiveStats();
     const interval = setInterval(fetchLiveStats, 5000);
     return () => clearInterval(interval);
   }, [token, data.loading]);
 
-  // 3. YouTube Recommendations (Triggered by score change)
+  // 3. Refresh the chart — every 30s, replaces the series wholesale so it's always one consistent timeline
+  useEffect(() => {
+    if (!token || data.loading) return;
+
+    const fetchTrend = async () => {
+      try {
+        const auth = { headers: { Authorization: `Bearer ${token}` } };
+        const res = await axios.get(
+          `${API_URL}/api/analytics/daily-trend`,
+          auth,
+        );
+        setData((prev) => ({ ...prev, focusHistory: res.data }));
+      } catch (err) {
+        console.error("Trend fetch error", err);
+      }
+    };
+
+    const interval = setInterval(fetchTrend, 30000);
+    return () => clearInterval(interval);
+  }, [token, data.loading]);
+
+  // 4. YouTube recommendations
   useEffect(() => {
     if (!data.analytics) return;
-
     const score = data.analytics.focus_score;
     const newCat = score > 70 ? "focus" : score > 40 ? "relax" : "boost";
-
     if (newCat !== data.category) {
       axios
         .get(`${API_URL}/api/youtube-recommendation?type=${newCat}`)

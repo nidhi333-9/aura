@@ -25,7 +25,7 @@ DESKTOP_SITE_MAP = {
 
 WEBSITE_MAP = [
     ('chatgpt',           'ChatGPT',         'Productive'),
-    ('claude.ai',         'Claude',          'Productive'),
+    ('claude',         'Claude',          'Productive'),
     ('github',            'GitHub',          'Productive'),
     ('stackoverflow',     'Stack Overflow',  'Productive'),
     ('leetcode',          'LeetCode',        'Productive'),
