@@ -127,7 +127,10 @@ const Dashboard = () => {
             <div className="flex-grow w-full">
               {focusHistory && focusHistory.length > 0 ? (
                 <div className="h-[300px] w-full min-h-[300px] min-w-0">
-                  <FocusChart data={focusHistory} />
+                  <FocusChart
+                    data={focusHistory}
+                    liveScore={analytics?.focus_score}
+                  />
                 </div>
               ) : (
                 <div className="h-full flex flex-col items-center justify-center text-gray-400">
