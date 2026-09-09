@@ -136,7 +136,9 @@ router.get("/daily-trend", authMiddleware, async (req, res) => {
           focusPoints === undefined
             ? 0
             : Math.min(Math.max(Math.round(focusPoints / 5), 20), 100);
-        return { time: `${String(hour).padStart(2, "0")}:00`, score };
+        const bucketTime = new Date(startOfDay);
+        bucketTime.setUTCHours(hour);
+        return { time: bucketTime.toISOString(), score };
       });
 
       res.json(formattedData);
