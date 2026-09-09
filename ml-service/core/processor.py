@@ -20,6 +20,7 @@ DESKTOP_SITE_MAP = {
     'Postman':            ('Postman', 'Productive'),
     'IntelliJ':           ('IntelliJ', 'Productive'),
     'PyCharm':            ('PyCharm', 'Productive'),
+    'Claude':             ('Claude', 'Productive'),
     'Spotify':            ('Spotify', 'Neutral'),
     'Finder':             ('Finder', 'Neutral'),
     'Desktop':            ('Idle', 'Idle'),
