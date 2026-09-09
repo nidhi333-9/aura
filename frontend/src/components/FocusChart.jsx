@@ -7,7 +7,14 @@ import {
   Tooltip,
   ResponsiveContainer,
   ReferenceDot,
+  ReferenceLine,
 } from "recharts";
+
+const formatLocalHour = (isoString) =>
+  new Date(isoString).toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
 
 const CustomTooltip = ({ active, payload, label }) => {
   if (!active || !payload || !payload.length) return null;
@@ -38,11 +45,25 @@ const ActiveDot = ({ cx, cy }) => (
 );
 
 const FocusChart = ({ data }) => {
-  const last = data && data.length > 0 ? data[data.length - 1] : null;
+  const chartData = (data || []).map((d) => ({
+    ...d,
+    label: formatLocalHour(d.time),
+  }));
+
+  const now = Date.now();
+  const current = chartData.reduce((closest, point) => {
+    const t = new Date(point.time).getTime();
+    if (Number.isNaN(t) || t > now) return closest;
+    if (!closest || t > new Date(closest.time).getTime()) return point;
+    return closest;
+  }, null);
 
   return (
     <ResponsiveContainer width="100%" height="100%">
-      <AreaChart data={data} margin={{ top: 10, right: 8, left: 0, bottom: 0 }}>
+      <AreaChart
+        data={chartData}
+        margin={{ top: 10, right: 8, left: 0, bottom: 0 }}
+      >
         <defs>
           <linearGradient id="colorFocus" x1="0" y1="0" x2="0" y2="1">
             <stop offset="5%" stopColor="#6366f1" stopOpacity={0.35} />
@@ -57,7 +78,7 @@ const FocusChart = ({ data }) => {
         />
 
         <XAxis
-          dataKey="time"
+          dataKey="label"
           tick={{ fontSize: 11, fill: "#9ca3af", fontWeight: 600 }}
           axisLine={false}
           tickLine={false}
@@ -90,16 +111,31 @@ const FocusChart = ({ data }) => {
           animationDuration={800}
         />
 
-        {last && (
-          <ReferenceDot
-            x={last.time}
-            y={last.score}
-            r={5}
-            fill="#6366f1"
-            stroke="#ffffff"
-            strokeWidth={2}
-            isFront
-          />
+        {current && (
+          <>
+            <ReferenceLine
+              x={current.label}
+              stroke="#6366f1"
+              strokeOpacity={0.4}
+              strokeDasharray="4 4"
+              label={{
+                value: "Now",
+                position: "top",
+                fill: "#6366f1",
+                fontSize: 10,
+                fontWeight: 700,
+              }}
+            />
+            <ReferenceDot
+              x={current.label}
+              y={current.score}
+              r={5}
+              fill="#6366f1"
+              stroke="#ffffff"
+              strokeWidth={2}
+              isFront
+            />
+          </>
         )}
       </AreaChart>
     </ResponsiveContainer>

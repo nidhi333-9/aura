@@ -129,7 +129,7 @@ def get_hourly_stats(user_id=None):
         docs = list(collection.find(query))
         docs = [d for d in docs if d.get('app_name') not in ['Desktop', 'Unknown']]
         if not docs:
-            return [{"hour": h.strftime('%H:00'), "score": 0} for h in full_day]
+            return [{"hour": h.isoformat(), "score": 0} for h in full_day]
 
         df = pd.DataFrame(docs)
         df['timestamp'] = pd.to_datetime(df['timestamp'], utc=True)
@@ -140,7 +140,7 @@ def get_hourly_stats(user_id=None):
         hourly = df.set_index('timestamp').resample('h')['is_focus'].mean() * 100
         hourly = hourly.reindex(full_day, fill_value=0)
 
-        return [{"hour": ts.strftime('%H:00'), "score": round(score, 2)} for ts, score in hourly.items()]
+        return [{"hour": ts.isoformat(), "score": round(score, 2)} for ts, score in hourly.items()]
 
     except Exception as e:
         print(f"❌ Hourly Stats Error: {e}")
