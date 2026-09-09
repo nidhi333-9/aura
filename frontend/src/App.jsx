@@ -57,7 +57,7 @@ function App() {
       {/* 1. NAVBAR (Fixed top) */}
       <div className="absolute top-0 left-0 w-full flex justify-between items-center px-12 py-6 z-50">
         <h1 className="logo-font text-3xl font-bold text-[var(--aura-dark)]">
-          Aura
+          🌱 Aura
         </h1>
         <button
           onClick={() => login()}
