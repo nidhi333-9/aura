@@ -1,11 +1,22 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import illustration from "./assets/Events-cuate.svg";
 import GoogleButton from "./components/GoogleButton.jsx";
 import { useAuth } from "./hooks/useAuth.js";
 import { useNavigate } from "react-router-dom";
+
+const MAC_INSTALL_CMD =
+  "curl -fsSL https://raw.githubusercontent.com/nidhi333-9/aura/main/tracker/install.sh | bash";
+
 function App() {
   const navigate = useNavigate();
   const { login, loading } = useAuth();
+  const [copied, setCopied] = useState(false);
+
+  const copyInstallCmd = () => {
+    navigator.clipboard.writeText(MAC_INSTALL_CMD);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
   useEffect(() => {
     const token = localStorage.getItem("token");
     const callback = new URLSearchParams(window.location.search).get(
@@ -197,32 +208,40 @@ function App() {
           </div>
 
           {/* Modernized Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-            <a
-              href="https://github.com/nidhi333-9/aura/releases/download/v1.0.0/aura-sensor-mac"
-              className="group relative flex items-center gap-3 bg-[var(--aura-dark)] text-white px-10 py-4 rounded-2xl hover:bg-black transition-all duration-300 shadow-xl"
-            >
-              <span className="text-xl">🍎</span>
-              <div className="flex flex-col items-start">
-                <span className="text-[10px] opacity-60 uppercase font-bold leading-none">
-                  Download for
+          <div className="flex flex-col items-center gap-6">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center w-full">
+              <button
+                type="button"
+                onClick={copyInstallCmd}
+                className="group relative flex items-center gap-3 bg-[var(--aura-dark)] text-white px-8 py-4 rounded-2xl hover:bg-black transition-all duration-300 shadow-xl font-mono text-sm"
+              >
+                <span className="text-xl">🍎</span>
+                <code className="truncate max-w-[260px] sm:max-w-none">
+                  {MAC_INSTALL_CMD}
+                </code>
+                <span className="text-[10px] uppercase font-bold opacity-70 shrink-0">
+                  {copied ? "Copied!" : "Copy"}
                 </span>
-                <span className="font-bold">macOS</span>
-              </div>
-            </a>
+              </button>
 
-            <a
-              href="https://github.com/nidhi333-9/aura/releases/download/v1.0.0/aura-sensor-windows.exe"
-              className="group relative flex items-center gap-3 bg-[var(--aura-blue)] text-white px-10 py-4 rounded-2xl hover:brightness-110 transition-all duration-300 shadow-xl shadow-blue-500/20"
-            >
-              <span className="text-xl">🪟</span>
-              <div className="flex flex-col items-start">
-                <span className="text-[10px] opacity-70 uppercase font-bold leading-none">
-                  Download for
-                </span>
-                <span className="font-bold">Windows</span>
-              </div>
-            </a>
+              <a
+                href="https://github.com/nidhi333-9/aura/releases/latest/download/aura-sensor-windows.zip"
+                className="group relative flex items-center gap-3 bg-[var(--aura-blue)] text-white px-10 py-4 rounded-2xl hover:brightness-110 transition-all duration-300 shadow-xl shadow-blue-500/20"
+              >
+                <span className="text-xl">🪟</span>
+                <div className="flex flex-col items-start">
+                  <span className="text-[10px] opacity-70 uppercase font-bold leading-none">
+                    Download for
+                  </span>
+                  <span className="font-bold">Windows</span>
+                </div>
+              </a>
+            </div>
+            <p className="text-xs text-gray-400 max-w-lg text-center">
+              macOS: paste that command into Terminal — running it this way
+              skips the "unidentified developer" block. Windows: if
+              SmartScreen warns you, click "More info" → "Run anyway".
+            </p>
           </div>
         </div>
       </div>

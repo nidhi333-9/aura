@@ -9,8 +9,8 @@ permissions:
   contents: write
 
 jobs:
-  build-mac:
-    runs-on: macos-latest
+  build-mac-arm64:
+    runs-on: macos-14
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -23,11 +23,31 @@ jobs:
       - name: Build
         run: |
           cd tracker
-          pyinstaller --onefile --name "aura-sensor-mac" sensor.py
+          pyinstaller --onefile --name "aura-sensor-mac-arm64" sensor.py
       - name: Upload to Release
         uses: softprops/action-gh-release@v1
         with:
-          files: tracker/dist/aura-sensor-mac
+          files: tracker/dist/aura-sensor-mac-arm64
+
+  build-mac-intel:
+    runs-on: macos-13
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: |
+          cd tracker
+          pip install pyinstaller pywinctl requests
+      - name: Build
+        run: |
+          cd tracker
+          pyinstaller --onefile --name "aura-sensor-mac-intel" sensor.py
+      - name: Upload to Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: tracker/dist/aura-sensor-mac-intel
 
   build-windows:
     runs-on: windows-latest
@@ -43,8 +63,12 @@ jobs:
       - name: Build
         run: |
           cd tracker
-          pyinstaller --onefile --name "aura-sensor-windows" sensor.py
+          pyinstaller --onedir --name "aura-sensor-windows" sensor.py
+      - name: Zip
+        run: |
+          cd tracker/dist
+          powershell Compress-Archive -Path aura-sensor-windows -DestinationPath aura-sensor-windows.zip
       - name: Upload to Release
         uses: softprops/action-gh-release@v1
         with:
-          files: tracker/dist/aura-sensor-windows.exe
+          files: tracker/dist/aura-sensor-windows.zip
