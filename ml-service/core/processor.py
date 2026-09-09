@@ -21,6 +21,7 @@ DESKTOP_SITE_MAP = {
     'IntelliJ':           ('IntelliJ', 'Productive'),
     'PyCharm':            ('PyCharm', 'Productive'),
     'Claude':             ('Claude', 'Productive'),
+    'ChatGPT':            ('ChatGPT', 'Productive'),
     'Spotify':            ('Spotify', 'Neutral'),
     'Finder':             ('Finder', 'Neutral'),
     'Desktop':            ('Idle', 'Idle'),
