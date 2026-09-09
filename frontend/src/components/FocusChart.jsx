@@ -44,19 +44,30 @@ const ActiveDot = ({ cx, cy }) => (
   </g>
 );
 
-const FocusChart = ({ data }) => {
+const FocusChart = ({ data, liveScore }) => {
   const chartData = (data || []).map((d) => ({
     ...d,
     label: formatLocalHour(d.time),
   }));
 
   const now = Date.now();
-  const current = chartData.reduce((closest, point) => {
+  let currentIndex = -1;
+  chartData.forEach((point, i) => {
     const t = new Date(point.time).getTime();
-    if (Number.isNaN(t) || t > now) return closest;
-    if (!closest || t > new Date(closest.time).getTime()) return point;
-    return closest;
-  }, null);
+    if (!Number.isNaN(t) && t <= now) currentIndex = i;
+  });
+
+  // The current (in-progress) hour's bucket average is a noisy small
+  // sample — pin it to the same rolling score shown on the Focus Score
+  // card so the two numbers never visibly disagree for "right now".
+  if (currentIndex !== -1 && typeof liveScore === "number") {
+    chartData[currentIndex] = {
+      ...chartData[currentIndex],
+      score: liveScore,
+    };
+  }
+
+  const current = currentIndex !== -1 ? chartData[currentIndex] : null;
 
   return (
     <ResponsiveContainer width="100%" height="100%">
