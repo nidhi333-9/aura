@@ -3,7 +3,7 @@ import illustration from "./assets/Events-cuate.svg";
 import GoogleButton from "./components/GoogleButton.jsx";
 import { useAuth } from "./hooks/useAuth.js";
 import { useNavigate } from "react-router-dom";
-
+import { Check, Copy, Terminal, Download } from "lucide-react";
 const MAC_INSTALL_CMD =
   "curl -fsSL https://raw.githubusercontent.com/nidhi333-9/aura/main/tracker/install.sh | bash";
 
@@ -31,6 +31,27 @@ function App() {
       navigate("/dashboard", { replace: true });
     }
   }, [navigate]);
+
+  const steps = [
+    {
+      step: "01",
+      title: "Authenticate",
+      desc: "Log in with your Google account to sync preferences.",
+      icon: "👤",
+    },
+    {
+      step: "02",
+      title: "Install Sensor",
+      desc: "Download or run the light background sensor agent.",
+      icon: "💾",
+    },
+    {
+      step: "03",
+      title: "Analyze & Flow",
+      desc: "Launch Aura and start receiving real-time insights.",
+      icon: "🚀",
+    },
+  ];
   return (
     <div className="min-h-screen bg-[var(--aura-light)] relative overflow-hidden bg-grid-mesh flex flex-col">
       {/* 1. NAVBAR (Fixed top) */}
@@ -152,99 +173,131 @@ function App() {
 
       {/* DOWNLOAD SECTION */}
       {/* DOWNLOAD SECTION */}
-      <div className="relative z-30 max-w-5xl mx-auto mb-32 px-4 w-full">
-        <div className="bg-white/40 backdrop-blur-xl rounded-[48px] p-8 md:p-16 border border-white/60 shadow-[0_20px_50px_rgba(0,0,0,0.05)]">
-          {/* Header - More compact and modern */}
-          <div className="max-w-2xl mx-auto text-center mb-16">
-            <span className="text-[var(--aura-blue)] font-bold tracking-widest uppercase text-xs bg-[var(--aura-blue)]/10 px-4 py-2 rounded-full">
+      <section className="relative z-30 max-w-5xl mx-auto mb-32 px-4 w-full font-sans">
+        <div className="relative overflow-hidden bg-white/60 backdrop-blur-2xl rounded-[40px] md:rounded-[48px] p-8 md:p-14 border border-white/80 shadow-[0_32px_64px_-12px_rgba(0,0,0,0.08)]">
+          {/* Subtle Background Accent Mesh */}
+          <div className="absolute -top-24 -right-24 w-72 h-72 bg-[var(--aura-blue)]/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-24 -left-24 w-72 h-72 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
+
+          {/* Section Header */}
+          <div className="max-w-xl mx-auto text-center mb-14">
+            <span className="inline-flex items-center gap-1.5 text-[var(--aura-blue)] font-bold tracking-widest uppercase text-[11px] bg-[var(--aura-blue)]/10 border border-[var(--aura-blue)]/20 px-4 py-1.5 rounded-full">
               Quick Setup
             </span>
-            <h2 className="text-4xl font-black text-[var(--aura-dark)] mt-6 mb-4">
+            <h2 className="text-3xl md:text-4xl font-extrabold text-[var(--aura-dark)] mt-4 mb-3 tracking-tight">
               Ready to find your flow?
             </h2>
-            <p className="text-gray-500 font-medium">
-              Set up Aura in less than two minutes.
+            <p className="text-gray-500 font-medium text-base">
+              Get Aura up and running on your machine in under two minutes.
             </p>
           </div>
 
-          {/* Steps - Horizontal flow with indicators */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-12 relative mb-16">
-            {/* Visual Connector Line (Hidden on mobile) */}
-            <div className="hidden md:block absolute top-12 left-[15%] right-[15%] h-[2px] bg-gradient-to-r from-transparent via-gray-200 to-transparent -z-10"></div>
+          {/* Horizontal Step Flow */}
+          <div className="relative grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-6 mb-14">
+            {/* Connector Line (Desktop Only) */}
+            <div className="hidden md:block absolute top-10 left-[18%] right-[18%] h-[2px] bg-gradient-to-r from-transparent via-gray-200 to-transparent -z-0" />
 
-            {[
-              {
-                step: "01",
-                title: "Authenticate",
-                desc: "Login with Google",
-                icon: "👤",
-              },
-              {
-                step: "02",
-                title: "Install",
-                desc: "Download the sensor",
-                icon: "💾",
-              },
-              {
-                step: "03",
-                title: "Analyze",
-                desc: "Run and see insights",
-                icon: "🚀",
-              },
-            ].map((item, idx) => (
-              <div key={idx} className="flex flex-col items-center group">
-                <div className="w-16 h-16 bg-white rounded-2xl shadow-sm border border-gray-100 flex items-center justify-center text-2xl mb-6 group-hover:scale-110 transition-transform duration-300">
-                  {item.icon}
+            {steps.map((item, idx) => (
+              <div
+                key={idx}
+                className="relative z-10 flex flex-col items-center text-center p-6 rounded-3xl bg-white/40 border border-white/60 hover:bg-white/80 hover:shadow-lg transition-all duration-300 group"
+              >
+                {/* Step Icon Badge */}
+                <div className="relative mb-5">
+                  <div className="w-16 h-16 bg-white rounded-2xl shadow-sm border border-gray-100/80 flex items-center justify-center text-2xl group-hover:scale-110 group-hover:shadow-md transition-all duration-300">
+                    {item.icon}
+                  </div>
+                  <span className="absolute -top-2 -right-2 bg-[var(--aura-blue)] text-white font-black text-[10px] px-2 py-0.5 rounded-full shadow-sm">
+                    {item.step}
+                  </span>
                 </div>
-                <span className="text-[var(--aura-blue)] font-black text-xs mb-1">
-                  {item.step}
-                </span>
-                <h3 className="font-bold text-[var(--aura-dark)] text-lg">
+
+                <h3 className="font-bold text-[var(--aura-dark)] text-lg mb-1">
                   {item.title}
                 </h3>
-                <p className="text-gray-400 text-sm mt-1">{item.desc}</p>
+                <p className="text-gray-500 text-xs leading-relaxed max-w-[200px]">
+                  {item.desc}
+                </p>
               </div>
             ))}
           </div>
 
-          {/* Modernized Buttons */}
-          <div className="flex flex-col items-center gap-6">
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-center w-full">
+          {/* Installation Actions */}
+          <div className="flex flex-col items-center gap-6 max-w-2xl mx-auto">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center items-stretch w-full">
+              {/* macOS Terminal Copy Button */}
               <button
                 type="button"
                 onClick={copyInstallCmd}
-                className="group relative flex items-center gap-3 bg-[var(--aura-dark)] text-white px-8 py-4 rounded-2xl hover:bg-black transition-all duration-300 shadow-xl font-mono text-sm"
+                className="group relative flex-1 flex items-center justify-between gap-3 bg-gray-900 hover:bg-black text-white px-5 py-3.5 rounded-2xl transition-all duration-300 shadow-xl shadow-gray-900/10 border border-gray-800"
               >
-                <span className="text-xl">🍎</span>
-                <code className="truncate max-w-[260px] sm:max-w-none">
-                  {MAC_INSTALL_CMD}
-                </code>
-                <span className="text-[10px] uppercase font-bold opacity-70 shrink-0">
-                  {copied ? "Copied!" : "Copy"}
-                </span>
+                <div className="flex items-center gap-3 overflow-hidden">
+                  <span className="text-xl shrink-0">🍎</span>
+                  <div className="flex flex-col items-start min-w-0">
+                    <span className="text-[10px] uppercase font-bold text-gray-400 leading-none mb-1">
+                      macOS Terminal
+                    </span>
+                    <code className="text-xs font-mono text-gray-200 truncate max-w-[180px] sm:max-w-[160px] md:max-w-[200px]">
+                      {MAC_INSTALL_CMD}
+                    </code>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-1.5 bg-white/10 group-hover:bg-white/20 px-3 py-1.5 rounded-xl transition-colors shrink-0">
+                  {copied ? (
+                    <>
+                      <Check className="w-3.5 h-3.5 text-emerald-400" />
+                      <span className="text-[11px] font-bold text-emerald-400 uppercase">
+                        Copied
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-3.5 h-3.5 text-gray-300" />
+                      <span className="text-[11px] font-bold text-gray-300 uppercase">
+                        Copy
+                      </span>
+                    </>
+                  )}
+                </div>
               </button>
 
+              {/* Windows Download Link */}
               <a
                 href="https://github.com/nidhi333-9/aura/releases/latest/download/aura-sensor-windows.zip"
-                className="group relative flex items-center gap-3 bg-[var(--aura-blue)] text-white px-10 py-4 rounded-2xl hover:brightness-110 transition-all duration-300 shadow-xl shadow-blue-500/20"
+                className="group flex-1 flex items-center justify-between gap-3 bg-[var(--aura-blue)] text-white px-5 py-3.5 rounded-2xl hover:brightness-110 transition-all duration-300 shadow-xl shadow-[var(--aura-blue)]/20"
               >
-                <span className="text-xl">🪟</span>
-                <div className="flex flex-col items-start">
-                  <span className="text-[10px] opacity-70 uppercase font-bold leading-none">
-                    Download for
-                  </span>
-                  <span className="font-bold">Windows</span>
+                <div className="flex items-center gap-3">
+                  <span className="text-xl">🪟</span>
+                  <div className="flex flex-col items-start">
+                    <span className="text-[10px] opacity-80 uppercase font-bold leading-none mb-1">
+                      Download for
+                    </span>
+                    <span className="font-bold text-sm leading-none">
+                      Windows .ZIP
+                    </span>
+                  </div>
+                </div>
+
+                <div className="bg-white/15 group-hover:bg-white/25 p-2 rounded-xl transition-colors">
+                  <Download className="w-4 h-4 text-white" />
                 </div>
               </a>
             </div>
-            <p className="text-xs text-gray-400 max-w-lg text-center">
-              macOS: paste that command into Terminal — running it this way
-              skips the "unidentified developer" block. Windows: if
-              SmartScreen warns you, click "More info" → "Run anyway".
+
+            {/* Platform OS Instructions */}
+            <p className="text-xs text-gray-400 max-w-lg text-center leading-relaxed">
+              <span className="font-semibold text-gray-500">macOS:</span> Paste
+              into Terminal to bypass gatekeeper permissions.{" "}
+              <br className="hidden sm:inline" />
+              <span className="font-semibold text-gray-500">Windows:</span> If
+              SmartScreen appears, select{" "}
+              <span className="underline underline-offset-2">More info</span> →{" "}
+              <span className="underline underline-offset-2">Run anyway</span>.
             </p>
           </div>
         </div>
-      </div>
+      </section>
       {/* 5. FOOTER */}
       <div className="w-full text-center text-xs text-gray-400 pb-8">
         Aura © 2026. Respecting your privacy is our priority 🔒
