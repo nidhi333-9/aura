@@ -91,7 +91,7 @@ router.get("/daily-trend", authMiddleware, async (req, res) => {
 
     try {
       const startOfDay = new Date();
-      startOfDay.setHours(0, 0, 0, 0);
+      startOfDay.setUTCHours(0, 0, 0, 0);
       const activities = await Activity.aggregate([
         {
           $match: {
@@ -127,10 +127,17 @@ router.get("/daily-trend", authMiddleware, async (req, res) => {
         { $sort: { _id: 1 } },
       ]);
 
-      const formattedData = activities.map((item) => ({
-        time: `${item._id}:00`,
-        score: Math.min(Math.max(Math.round(item.focusPoints / 5), 20), 100),
-      }));
+      const pointsByHour = new Map(
+        activities.map((item) => [item._id, item.focusPoints]),
+      );
+      const formattedData = Array.from({ length: 24 }, (_, hour) => {
+        const focusPoints = pointsByHour.get(hour);
+        const score =
+          focusPoints === undefined
+            ? 0
+            : Math.min(Math.max(Math.round(focusPoints / 5), 20), 100);
+        return { time: `${String(hour).padStart(2, "0")}:00`, score };
+      });
 
       res.json(formattedData);
     } catch (fallbackErr) {
