@@ -22,8 +22,9 @@ const TopSites = ({ topSites }) => {
 
       {sorted.length === 0 ? (
         <div className="flex flex-col items-center justify-center text-gray-400 py-10">
-          <div className="w-8 h-8 border-2 border-gray-200 border-t-[var(--aura-blue)] rounded-full animate-spin mb-4"></div>
-          <p className="text-sm font-medium">Gathering usage data...</p>
+          <p className="text-sm font-medium">
+            No activity tracked yet — install the sensor to get started.
+          </p>
         </div>
       ) : (
         <div className="flex flex-col gap-6">
