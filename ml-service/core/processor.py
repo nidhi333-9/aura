@@ -122,12 +122,14 @@ def get_hourly_stats(user_id=None):
     try:
         collection = get_collection()
         today = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+        full_day = pd.date_range(start=today, periods=24, freq='h', tz='UTC')
+
         query = _user_filter(user_id)
         query["timestamp"] = {"$gte": today}
         docs = list(collection.find(query))
         docs = [d for d in docs if d.get('app_name') not in ['Desktop', 'Unknown']]
         if not docs:
-            return []
+            return [{"hour": h.strftime('%H:00'), "score": 0} for h in full_day]
 
         df = pd.DataFrame(docs)
         df['timestamp'] = pd.to_datetime(df['timestamp'], utc=True)
@@ -136,9 +138,9 @@ def get_hourly_stats(user_id=None):
         df['is_focus'] = (df['Category'] == 'Productive').astype(int)
 
         hourly = df.set_index('timestamp').resample('h')['is_focus'].mean() * 100
-        hourly = hourly.fillna(0).reset_index()
+        hourly = hourly.reindex(full_day, fill_value=0)
 
-        return [{"hour": r['timestamp'].strftime('%H:00'), "score": round(r['is_focus'], 2)} for _, r in hourly.iterrows()]
+        return [{"hour": ts.strftime('%H:00'), "score": round(score, 2)} for ts, score in hourly.items()]
 
     except Exception as e:
         print(f"❌ Hourly Stats Error: {e}")
