@@ -16,6 +16,11 @@ router.get("/", authMiddleware, async (req, res) => {
         headers: { Connection: "keep-alive" },
       },
     );
+
+    if (mlData.data.current_app === "Error") {
+      throw new Error("ML service returned an internal error");
+    }
+
     res.json(mlData.data);
   } catch (err) {
     console.error("ML ERROR:", err.message);
