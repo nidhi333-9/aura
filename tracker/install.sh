@@ -31,6 +31,11 @@ echo "Downloading Aura Sensor ($ASSET)..."
 curl -fsSL "$URL" -o "$DEST"
 chmod +x "$DEST"
 
+if [ -n "$AURA_TOKEN" ]; then
+  printf '{"token": "%s"}' "$AURA_TOKEN" > "$HOME/.aura_token"
+  echo "Signed in as your current dashboard session."
+fi
+
 echo "Installed to $DEST"
 echo "Starting Aura Sensor..."
 exec "$DEST"

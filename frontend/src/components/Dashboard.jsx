@@ -4,14 +4,47 @@ import SpotifyPlayer from "./SpotifyPlayer";
 import FocusChart from "./FocusChart";
 import StatCard from "./StatCard";
 import { useState } from "react";
-import { LogOut, LayoutDashboard, Zap, Target, Activity } from "lucide-react";
+import {
+  LogOut,
+  LayoutDashboard,
+  Zap,
+  Target,
+  Activity,
+  Check,
+  Copy,
+  Download,
+} from "lucide-react";
 import TopSites from "./TopSites";
+
+const mask = (token) => (token ? "•".repeat(12) : "");
+
 const Dashboard = () => {
   const navigate = useNavigate();
   const { userData, analytics, loading, focusHistory, video, category } =
     useAuraData();
   const userName = JSON.parse(localStorage.getItem("user"));
   const [showInsights, setShowInsights] = useState(false);
+  const [copiedPlatform, setCopiedPlatform] = useState(null);
+  const token = localStorage.getItem("token");
+
+  const macInstallCmd = `curl -fsSL https://raw.githubusercontent.com/nidhi333-9/aura/main/tracker/install.sh | AURA_TOKEN=${token} bash`;
+  const macInstallCmdMasked = `curl -fsSL https://raw.githubusercontent.com/nidhi333-9/aura/main/tracker/install.sh | AURA_TOKEN=${mask(token)} bash`;
+  const winInstallCmd = `$env:AURA_TOKEN="${token}"; irm https://raw.githubusercontent.com/nidhi333-9/aura/main/tracker/install.ps1 | iex`;
+  const winInstallCmdMasked = `$env:AURA_TOKEN="${mask(token)}"; irm https://raw.githubusercontent.com/nidhi333-9/aura/main/tracker/install.ps1 | iex`;
+
+  const copyInstallCmd = (platform) => {
+    navigator.clipboard.writeText(
+      platform === "mac" ? macInstallCmd : winInstallCmd,
+    );
+    setCopiedPlatform(platform);
+    setTimeout(() => setCopiedPlatform(null), 2000);
+  };
+
+  const scrollToInstall = () => {
+    document
+      .getElementById("connect-sensor")
+      ?.scrollIntoView({ behavior: "smooth", block: "center" });
+  };
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -106,7 +139,10 @@ const Dashboard = () => {
         </div>
         {/* TOP APPS & SITES */}
         <div className="mb-12">
-          <TopSites topSites={analytics?.top_sites} />
+          <TopSites
+            topSites={analytics?.top_sites}
+            onInstallClick={scrollToInstall}
+          />
         </div>
         {/* 3. MAIN CONTENT STACK */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-10 mb-12">
@@ -258,6 +294,105 @@ const Dashboard = () => {
             </div>
           </div>
         </div>
+
+        {/* CONNECT SENSOR */}
+        <section
+          id="connect-sensor"
+          className="mt-16 bg-white/60 backdrop-blur-xl p-8 md:p-12 rounded-[40px] border border-white/40 shadow-xl"
+        >
+          <div className="max-w-xl mx-auto text-center mb-10">
+            <span className="inline-flex items-center gap-1.5 text-[var(--aura-blue)] font-bold tracking-widest uppercase text-[11px] bg-[var(--aura-blue)]/10 border border-[var(--aura-blue)]/20 px-4 py-1.5 rounded-full">
+              Connect Sensor
+            </span>
+            <h2 className="text-3xl font-extrabold text-[var(--aura-dark)] mt-4 mb-3 tracking-tight">
+              Run this on your machine
+            </h2>
+            <p className="text-gray-500 font-medium text-sm">
+              These commands are tied to your current login — no separate
+              sensor sign-in needed. Never share them; anyone with the copied
+              command can post activity as you.
+            </p>
+          </div>
+
+          <div className="flex flex-col gap-4 max-w-2xl mx-auto">
+            <button
+              type="button"
+              onClick={() => copyInstallCmd("mac")}
+              className="group relative flex items-center justify-between gap-3 bg-gray-900 hover:bg-black text-white px-5 py-3.5 rounded-2xl transition-all duration-300 shadow-xl shadow-gray-900/10 border border-gray-800 text-left"
+            >
+              <div className="flex items-center gap-3 overflow-hidden">
+                <span className="text-xl shrink-0">🍎</span>
+                <div className="flex flex-col items-start min-w-0">
+                  <span className="text-[10px] uppercase font-bold text-gray-400 leading-none mb-1">
+                    macOS Terminal
+                  </span>
+                  <code className="text-xs font-mono text-gray-200 truncate max-w-[220px] sm:max-w-[420px]">
+                    {macInstallCmdMasked}
+                  </code>
+                </div>
+              </div>
+              <div className="flex items-center gap-1.5 bg-white/10 group-hover:bg-white/20 px-3 py-1.5 rounded-xl transition-colors shrink-0">
+                {copiedPlatform === "mac" ? (
+                  <>
+                    <Check className="w-3.5 h-3.5 text-emerald-400" />
+                    <span className="text-[11px] font-bold text-emerald-400 uppercase">
+                      Copied
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-3.5 h-3.5 text-gray-300" />
+                    <span className="text-[11px] font-bold text-gray-300 uppercase">
+                      Copy
+                    </span>
+                  </>
+                )}
+              </div>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => copyInstallCmd("windows")}
+              className="group relative flex items-center justify-between gap-3 bg-[var(--aura-blue)] hover:brightness-110 text-white px-5 py-3.5 rounded-2xl transition-all duration-300 shadow-xl shadow-[var(--aura-blue)]/20 text-left"
+            >
+              <div className="flex items-center gap-3 overflow-hidden">
+                <span className="text-xl shrink-0">🪟</span>
+                <div className="flex flex-col items-start min-w-0">
+                  <span className="text-[10px] uppercase font-bold text-white/70 leading-none mb-1">
+                    Windows PowerShell
+                  </span>
+                  <code className="text-xs font-mono text-white/90 truncate max-w-[220px] sm:max-w-[420px]">
+                    {winInstallCmdMasked}
+                  </code>
+                </div>
+              </div>
+              <div className="flex items-center gap-1.5 bg-white/15 group-hover:bg-white/25 px-3 py-1.5 rounded-xl transition-colors shrink-0">
+                {copiedPlatform === "windows" ? (
+                  <>
+                    <Check className="w-3.5 h-3.5 text-white" />
+                    <span className="text-[11px] font-bold text-white uppercase">
+                      Copied
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <Download className="w-3.5 h-3.5 text-white" />
+                    <span className="text-[11px] font-bold text-white uppercase">
+                      Copy
+                    </span>
+                  </>
+                )}
+              </div>
+            </button>
+          </div>
+
+          <p className="text-xs text-gray-400 max-w-lg mx-auto text-center mt-6 leading-relaxed">
+            <span className="font-semibold text-gray-500">macOS:</span> paste
+            into Terminal. <br className="hidden sm:inline" />
+            <span className="font-semibold text-gray-500">Windows:</span>{" "}
+            paste into PowerShell.
+          </p>
+        </section>
 
         {/* 6. FOOTER */}
         <div className="w-full text-center text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 mt-24 pb-12">
