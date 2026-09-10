@@ -6,7 +6,7 @@ const COLORS = [
   "#ec4899",
 ];
 
-const TopSites = ({ topSites }) => {
+const TopSites = ({ topSites, onInstallClick }) => {
   const sorted = topSites
     ? Object.entries(topSites)
         .sort((a, b) => b[1] - a[1])
@@ -22,9 +22,19 @@ const TopSites = ({ topSites }) => {
 
       {sorted.length === 0 ? (
         <div className="flex flex-col items-center justify-center text-gray-400 py-10">
-          <p className="text-sm font-medium">
-            No activity tracked yet — install the sensor to get started.
-          </p>
+          {onInstallClick ? (
+            <button
+              type="button"
+              onClick={onInstallClick}
+              className="text-sm font-medium underline underline-offset-4 decoration-dashed hover:text-[var(--aura-blue)] transition-colors"
+            >
+              No activity tracked yet — install the sensor to get started.
+            </button>
+          ) : (
+            <p className="text-sm font-medium">
+              No activity tracked yet — install the sensor to get started.
+            </p>
+          )}
         </div>
       ) : (
         <div className="flex flex-col gap-6">
