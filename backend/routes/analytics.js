@@ -12,7 +12,7 @@ router.get("/", authMiddleware, async (req, res) => {
     const mlData = await axios.get(
       `${ML_URL}/analytics?user_id=${req.user.id}`,
       {
-        timeout: 10000,
+        timeout: 25000,
         headers: { Connection: "keep-alive" },
       },
     );
@@ -51,18 +51,41 @@ router.get("/", authMiddleware, async (req, res) => {
 
       const productiveApps = [
         "Visual Studio Code",
+        "Code",
         "Cursor",
         "Terminal",
-        "Code",
+        "iTerm2",
         "Postman",
+        "IntelliJ",
+        "PyCharm",
+        "Claude",
+        "ChatGPT",
       ];
+      const productiveCount = activities.filter((a) =>
+        productiveApps.includes(a.app_name),
+      ).length;
       const focus_score = Math.round(
-        (activities.filter((a) => productiveApps.includes(a.app_name)).length /
-          activities.length) *
-          100,
+        (productiveCount / activities.length) * 100,
       );
 
-      res.json({ focus_score, current_app, most_used });
+      const top_sites = Object.fromEntries(
+        Object.entries(appCount)
+          .sort((a, b) => b[1] - a[1])
+          .slice(0, 10),
+      );
+      const app_distribution = {
+        Productive: productiveCount,
+        Neutral: activities.length - productiveCount,
+      };
+
+      res.json({
+        focus_score,
+        current_app,
+        most_used,
+        top_sites,
+        app_distribution,
+        total_logs: activities.length,
+      });
     } catch (fallbackErr) {
       console.error("FALLBACK ERROR:", fallbackErr.message);
       res.status(500).json({ error: "Both ML service and DB fallback failed" });
@@ -74,7 +97,7 @@ router.get("/daily-trend", authMiddleware, async (req, res) => {
   try {
     const mlData = await axios.get(
       `${ML_URL}/hourly-trend?user_id=${req.user.id}`,
-      { timeout: 10000 },
+      { timeout: 25000 },
     );
 
     if (!Array.isArray(mlData.data)) {
@@ -110,10 +133,15 @@ router.get("/daily-trend", authMiddleware, async (req, res) => {
                       "$app_name",
                       [
                         "Visual Studio Code",
+                        "Code",
                         "Cursor",
                         "Terminal",
+                        "iTerm2",
                         "Postman",
                         "IntelliJ",
+                        "PyCharm",
+                        "Claude",
+                        "ChatGPT",
                       ],
                     ],
                   },
