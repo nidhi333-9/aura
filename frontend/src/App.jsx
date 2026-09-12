@@ -173,13 +173,11 @@ function App() {
 
       {/* DOWNLOAD SECTION */}
       {/* DOWNLOAD SECTION */}
-      <section className="relative z-30 max-w-5xl mx-auto mb-32 px-4 w-full font-sans">
+      {/* <section className="relative z-30 max-w-5xl mx-auto mb-32 px-4 w-full font-sans">
         <div className="relative overflow-hidden bg-white/60 backdrop-blur-2xl rounded-[40px] md:rounded-[48px] p-8 md:p-14 border border-white/80 shadow-[0_32px_64px_-12px_rgba(0,0,0,0.08)]">
-          {/* Subtle Background Accent Mesh */}
           <div className="absolute -top-24 -right-24 w-72 h-72 bg-[var(--aura-blue)]/10 rounded-full blur-3xl pointer-events-none" />
           <div className="absolute -bottom-24 -left-24 w-72 h-72 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
 
-          {/* Section Header */}
           <div className="max-w-xl mx-auto text-center mb-14">
             <span className="inline-flex items-center gap-1.5 text-[var(--aura-blue)] font-bold tracking-widest uppercase text-[11px] bg-[var(--aura-blue)]/10 border border-[var(--aura-blue)]/20 px-4 py-1.5 rounded-full">
               Quick Setup
@@ -192,9 +190,7 @@ function App() {
             </p>
           </div>
 
-          {/* Horizontal Step Flow */}
           <div className="relative grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-6 mb-14">
-            {/* Connector Line (Desktop Only) */}
             <div className="hidden md:block absolute top-10 left-[18%] right-[18%] h-[2px] bg-gradient-to-r from-transparent via-gray-200 to-transparent -z-0" />
 
             {steps.map((item, idx) => (
@@ -202,7 +198,6 @@ function App() {
                 key={idx}
                 className="relative z-10 flex flex-col items-center text-center p-6 rounded-3xl bg-white/40 border border-white/60 hover:bg-white/80 hover:shadow-lg transition-all duration-300 group"
               >
-                {/* Step Icon Badge */}
                 <div className="relative mb-5">
                   <div className="w-16 h-16 bg-white rounded-2xl shadow-sm border border-gray-100/80 flex items-center justify-center text-2xl group-hover:scale-110 group-hover:shadow-md transition-all duration-300">
                     {item.icon}
@@ -222,10 +217,8 @@ function App() {
             ))}
           </div>
 
-          {/* Installation Actions */}
           <div className="flex flex-col items-center gap-6 max-w-2xl mx-auto">
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-stretch w-full">
-              {/* macOS Terminal Copy Button */}
               <button
                 type="button"
                 onClick={copyInstallCmd}
@@ -262,7 +255,6 @@ function App() {
                 </div>
               </button>
 
-              {/* Windows Download Link */}
               <a
                 href="https://github.com/nidhi333-9/aura/releases/latest/download/aura-sensor-windows.zip"
                 className="group flex-1 flex items-center justify-between gap-3 bg-[var(--aura-blue)] text-white px-5 py-3.5 rounded-2xl hover:brightness-110 transition-all duration-300 shadow-xl shadow-[var(--aura-blue)]/20"
@@ -285,7 +277,6 @@ function App() {
               </a>
             </div>
 
-            {/* Platform OS Instructions */}
             <p className="text-xs text-gray-400 max-w-lg text-center leading-relaxed">
               <span className="font-semibold text-gray-500">macOS:</span> Paste
               into Terminal to bypass gatekeeper permissions.{" "}
@@ -296,6 +287,102 @@ function App() {
               <span className="underline underline-offset-2">Run anyway</span>.
             </p>
           </div>
+        </div>
+      </section> */}
+      {/* FEATURES / VALUE PROP SECTION */}
+      <section className="relative z-30 max-w-5xl mx-auto mb-32 px-4 w-full font-sans">
+        <div className="relative overflow-hidden bg-white/60 backdrop-blur-2xl rounded-[40px] md:rounded-[48px] p-8 md:p-14 border border-white/80 shadow-[0_32px_64px_-12px_rgba(0,0,0,0.08)]">
+          {/* Subtle Background Accent Mesh */}
+          <div className="absolute -top-24 -right-24 w-72 h-72 bg-[var(--aura-blue)]/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-24 -left-24 w-72 h-72 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
+
+          {/* Section Header */}
+          <div className="max-w-xl mx-auto text-center mb-12">
+            <span className="inline-flex items-center gap-1.5 text-[var(--aura-blue)] font-bold tracking-widest uppercase text-[11px] bg-[var(--aura-blue)]/10 border border-[var(--aura-blue)]/20 px-4 py-1.5 rounded-full">
+              Why Aura
+            </span>
+            <h2 className="text-3xl md:text-4xl font-extrabold text-[var(--aura-dark)] mt-4 mb-3 tracking-tight">
+              Engineered for deep focus
+            </h2>
+            <p className="text-gray-500 font-medium text-base">
+              Understand your work habits with zero manual logging or extra
+              setup.
+            </p>
+          </div>
+
+          {/* 3-Column Feature Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div className="flex flex-col items-start p-6 rounded-3xl bg-white/40 border border-white/60 hover:bg-white/80 hover:shadow-lg transition-all duration-300">
+              <div className="w-12 h-12 bg-white rounded-2xl shadow-sm border border-gray-100 flex items-center justify-center text-xl mb-4 text-[var(--aura-blue)]">
+                ⚡
+              </div>
+              <h3 className="font-bold text-[var(--aura-dark)] text-lg mb-2">
+                Automatic Tracking
+              </h3>
+              <p className="text-gray-500 text-xs leading-relaxed">
+                Runs silently in the background, logging active application
+                contexts and focus sessions seamlessly.
+              </p>
+            </div>
+
+            <div className="flex flex-col items-start p-6 rounded-3xl bg-white/40 border border-white/60 hover:bg-white/80 hover:shadow-lg transition-all duration-300">
+              <div className="w-12 h-12 bg-white rounded-2xl shadow-sm border border-gray-100 flex items-center justify-center text-xl mb-4 text-[var(--aura-blue)]">
+                📊
+              </div>
+              <h3 className="font-bold text-[var(--aura-dark)] text-lg mb-2">
+                Real-time Analytics
+              </h3>
+              <p className="text-gray-500 text-xs leading-relaxed">
+                Visualize peak productivity hours, context switches, and deep
+                focus scores directly from your dashboard.
+              </p>
+            </div>
+
+            <div className="flex flex-col items-start p-6 rounded-3xl bg-white/40 border border-white/60 hover:bg-white/80 hover:shadow-lg transition-all duration-300">
+              <div className="w-12 h-12 bg-white rounded-2xl shadow-sm border border-gray-100 flex items-center justify-center text-xl mb-4 text-[var(--aura-blue)]">
+                🔒
+              </div>
+              <h3 className="font-bold text-[var(--aura-dark)] text-lg mb-2">
+                Privacy First
+              </h3>
+              <p className="text-gray-500 text-xs leading-relaxed">
+                Your telemetry data stays secure, isolated to your account, and
+                completely under your control.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* DIRECT CTA SECTION */}
+      <section className="relative z-30 max-w-5xl mx-auto mb-32 px-4 w-full font-sans">
+        <div className="relative overflow-hidden bg-white/60 backdrop-blur-2xl rounded-[40px] md:rounded-[48px] p-8 md:p-14 border border-white/80 shadow-[0_32px_64px_-12px_rgba(0,0,0,0.08)] flex flex-col items-center text-center">
+          {/* Subtle Background Accent Mesh */}
+          <div className="absolute -top-24 -right-24 w-72 h-72 bg-[var(--aura-blue)]/10 rounded-full blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-24 -left-24 w-72 h-72 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
+
+          {/* Section Badge */}
+          <span className="inline-flex items-center gap-1.5 text-[var(--aura-blue)] font-bold tracking-widest uppercase text-[11px] bg-[var(--aura-blue)]/10 border border-[var(--aura-blue)]/20 px-4 py-1.5 rounded-full mb-4">
+            Instant Access
+          </span>
+
+          {/* CTA Copy */}
+          <h2 className="text-3xl md:text-5xl font-extrabold text-[var(--aura-dark)] mb-4 tracking-tight max-w-2xl">
+            Ready to find your flow?
+          </h2>
+          <p className="text-gray-500 font-medium text-base sm:text-lg max-w-lg mb-8 leading-relaxed">
+            Jump directly into your personalized dashboard to analyze real-time
+            focus metrics and behavioral insights.
+          </p>
+
+          {/* Primary Action Button */}
+          <a
+            href="/dashboard"
+            className="inline-flex items-center gap-3 bg-[var(--aura-blue)] text-white font-bold text-base px-8 py-4 rounded-2xl shadow-xl shadow-[var(--aura-blue)]/25 hover:brightness-110 hover:scale-[1.02] active:scale-[0.98] transition-all duration-300"
+          >
+            <span>Open Dashboard</span>
+            <span className="text-xl">→</span>
+          </a>
         </div>
       </section>
       {/* 5. FOOTER */}
