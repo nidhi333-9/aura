@@ -34,7 +34,7 @@ flowchart TB
 | Dashboard | `frontend/` | React + Vite + Tailwind + Recharts. Shows the score and the charts. | Vercel |
 | Backend | `backend/` | Express + Mongoose. The only part that **writes** to the database. | Render |
 | Database | n/a | MongoDB Atlas, database `aura`. | Atlas |
-| ML service | `ml-service/` | FastAPI + pandas. **Read only.** **Nothing calls it any more**: its code stays for the training scripts in `ml-service/training/`, and its Render service can be switched off. | Render |
+| ML service | `ml-service/` | FastAPI + pandas. **Read only.** **Experimental; nothing calls it any more**: its code stays for the training scripts in `ml-service/training/`, and its Render service can be switched off. See `ml-service/README.md`. | Render |
 
 Two rules the project follows:
 
@@ -340,7 +340,7 @@ device; nobody was sending samples with a login token):
 
 * The sensor deletes an old `~/.aura_token` file after pairing (`remove_legacy_token` in `tracker/sensor.py`).
 * The installers refuse a stale install command that carries a login token (`AURA_TOKEN`) and say what to do.
-* The `ml-service/` folder, because the training scripts use `core/processor.py`.
+* The `ml-service/` folder, labelled experimental in `ml-service/README.md`: the training scripts use `core/processor.py`, whose copy of the rules is frozen and outdated.
 
 ## 12. Known limits
 

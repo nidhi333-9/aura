@@ -33,17 +33,17 @@ Aura is an AI-powered productivity tracker that passively monitors your computer
 
 - Frontend: React + Vite + TailwindCSS  
 - Backend: Node.js + Express  
-- ML Service: Python + FastAPI  
+- ML Service (experimental, not used by the product): Python + FastAPI  
 - Database: MongoDB  
 - Desktop Agent: Python + PyInstaller  
-- Hosting: Vercel (dashboard) + Render (backend, ML service) + MongoDB Atlas
+- Hosting: Vercel (dashboard) + Render (backend; the experimental ML service can stay off) + MongoDB Atlas
 
 ## ⚙️ How It Works
 
 1. The desktop sensor looks at your front window every 10 seconds (on a Mac, also which website your browser is on)  
 2. It sends that to the backend with its own device key; the backend labels each moment Productive, Neutral, Distraction or Idle and stores it  
 3. The dashboard turns those labels into a live focus score, today's chart and week, month and 3-month history  
-4. The ML service is read-only and nothing calls it any more (its code stays for the training scripts)  
+4. The `ml-service/` folder is experimental: nothing calls it any more and the score and charts do not need it (see [ml-service/README.md](ml-service/README.md))  
 
 The full picture, with diagrams, is in **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)**.
 
@@ -76,7 +76,7 @@ Keep your local values in `.env.local` files instead. They override `.env`, are 
 
 ```bash
 cp backend/.env.example     backend/.env.local      # local MongoDB + local secrets
-cp ml-service/.env.example  ml-service/.env.local   # local MongoDB
+cp ml-service/.env.example  ml-service/.env.local   # local MongoDB (only for the experimental ML service)
 cp frontend/.env.example    frontend/.env.local     # VITE_API_URL=http://localhost:8080
 ```
 
@@ -94,7 +94,7 @@ cd frontend
 npm install  
 npm run dev  
 
-### ML Service
+### ML Service (experimental, optional: nothing needs it)
 cd ml-service  
 pip install -r requirements.txt  
 uvicorn api:app --reload  
@@ -147,7 +147,7 @@ PAIR_CODE_TTL_SECONDS= (optional, default 600: how long a sensor pairing code st
 TRUST_PROXY_HOPS= (optional, default 3, measured for Render: how many proxies Express believes when it works out a caller's address; check with `GET /api/network-check`, see docs/ARCHITECTURE.md)  
 RATE_LIMIT_DISABLED= (optional: `true` switches every request limit off)  
 
-### ML Service
+### ML Service (experimental)
 MONGO_URI= (use a read-only database user — the ML service never writes)  
 ML_SHARED_SECRET= (required — every request without this secret is rejected)  
 
@@ -158,7 +158,7 @@ VITE_API_URL=
 
 - Frontend → Vercel  
 - Backend → Render  
-- ML Service → Render  
+- ML Service → Render (optional; nothing uses it, so it can stay switched off)  
 - Database → MongoDB Atlas  
 
 How the pieces connect, who may call what, and the everyday jobs (releasing a sensor, rebuilding summaries) are in
