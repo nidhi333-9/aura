@@ -206,6 +206,10 @@ flowchart LR
   exact for a viewer in any zone (even Nepal's +5:45).
 * `/api/history` reads the summaries only when `meta` "rollups" says `ready: true`. Before that it reads raw
   data (and the 3-month range answers "not available yet").
+* Once raw samples start to expire, the summaries are the **only** record of those days. `rebuild-rollups.js` therefore
+  never recomputes a day whose raw samples are gone: it works that out from the data (the expiry rule exists, or was ever
+  enabled, or summaries exist for days older than the oldest raw sample), so switching the rule off or changing its
+  period cannot make a rebuild overwrite history with less (`firstCompleteDay` in `backend/services/rollupBuild.js`).
 * **`ready` is set by a script, not automatically**, because the script first rebuilds the summaries,
   re-reads the raw data and checks they match exactly. That is why the "3 months" tab needed a one-time command.
 
@@ -311,7 +315,7 @@ and embeds a Spotify playlist picked by your score in the browser.
 | Change how sites are labelled | Edit `backend/services/classify.js`, add a test in `backend/test/classify.test.js`, push. New samples use it at once. |
 | Relabel old samples too | From `backend/`: `node scripts/backfill-classification.js --apply --force`, **then** `node scripts/rebuild-rollups.js --apply`. |
 | Fix or rebuild the daily summaries | `node scripts/rebuild-rollups.js --apply` (repeatable). `--disable` makes history read raw data again. |
-| Let old raw samples expire (the only thing that deletes data) | `node scripts/enable-raw-ttl.js` first as a dry run; take an Atlas snapshot before `--apply`. |
+| Let old raw samples expire (the only thing that deletes data) | `node scripts/backup.js` (read-only copy to `~/aura-backups`), then `node scripts/enable-raw-ttl.js` as a dry run, then `--days 30 --apply`. |
 | Hide secrets in titles that were saved before the cleaner existed | From `backend/`: `node scripts/redact-titles.js` (dry run), then `--apply`. Safe to repeat. |
 | Run the tests | `cd backend && npm test`. `cd tracker && python -m unittest test_sensor -v`. |
 

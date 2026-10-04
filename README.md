@@ -198,12 +198,15 @@ Run these from `backend/` with `MONGO_URI` pointing at the real database:
 4. **Optional, and the only step that deletes anything: expire old raw samples.**
    ```bash
    node scripts/enable-raw-ttl.js                      # dry run: re-verifies everything, says how many rows would go
-   node scripts/enable-raw-ttl.js --days 30 --apply    # take a database snapshot first
+   node scripts/backup.js                              # first: saves a copy of the database to ~/aura-backups (read-only)
+   node scripts/enable-raw-ttl.js --days 30 --apply
    ```
    It refuses unless the summaries match the raw rows exactly. The summaries (all the charts need) are kept
    forever; individual samples and their window titles older than 30 days are deleted, which is also good
    for privacy. If you want old titles for ML labelling, run `ml-service/training/build_dataset.py` first.
-   To stop expiring: `node scripts/enable-raw-ttl.js --disable --apply` (deleted rows are not restored).
+   To stop expiring: `node scripts/enable-raw-ttl.js --disable --apply` (deleted rows are not restored; `mongorestore` of the
+   backup brings them back, with expiry switched off first). After samples have expired, `rebuild-rollups.js` never
+   recomputes a day whose raw samples are gone, so the daily summaries (the permanent history) can't be overwritten with less.
 
 After `backfill-classification.js --force` (relabelling existing rows), run `rebuild-rollups.js --apply` again.
 If a rollup write ever fails at ingest the sample is still saved; `rebuild-rollups.js --apply --days 3`
