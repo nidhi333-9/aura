@@ -36,14 +36,16 @@ Aura is an AI-powered productivity tracker that passively monitors your computer
 - ML Service: Python + FastAPI  
 - Database: MongoDB  
 - Desktop Agent: Python + PyInstaller  
-- Deployment: Vercel + Railway
+- Hosting: Vercel (dashboard) + Render (backend, ML service) + MongoDB Atlas
 
 ## ⚙️ How It Works
 
-1. Desktop sensor tracks active apps and browser tabs  
-2. Data is sent to backend for processing  
-3. ML service analyzes behavior and predicts focus/mood  
-4. Frontend displays insights in real-time
+1. The desktop sensor looks at your front window every 10 seconds (on a Mac, also which website your browser is on)  
+2. It sends that to the backend with its own device key; the backend labels each moment Productive, Neutral, Distraction or Idle and stores it  
+3. The dashboard turns those labels into a live focus score, today's chart and week, month and 3-month history  
+4. The ML service is read-only and is no longer on the dashboard's path  
+
+The full picture, with diagrams, is in **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)**.
 
 ## 🚀 Getting Started
 
@@ -136,9 +138,12 @@ VITE_API_URL=
 ## 📦 Deployment
 
 - Frontend → Vercel  
-- Backend → Railway  
-- ML Service → Railway  
-- Database → MongoDB
+- Backend → Render  
+- ML Service → Render  
+- Database → MongoDB Atlas  
+
+How the pieces connect, who may call what, and the everyday jobs (releasing a sensor, rebuilding summaries) are in
+[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ### After deploying the classify-at-ingest change
 
