@@ -1,8 +1,12 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { api } from "../api/client";
 
 const SLOW_LOAD_MS = 6_000; // after this, tell the user the server is probably waking up
+// Until a card has loaded once, wait longer than the client's default: a sleeping free-tier server
+// holds the request for up to a minute, and giving up at 45 s only restarts that wait (and flashes
+// an error just before the data would have arrived).
+const FIRST_LOAD_TIMEOUT_MS = 90_000;
 
 // Fetches `path` now and then every `intervalMs`, independently of every other card.
 //  - pauses while the tab is hidden and refreshes the moment it becomes visible again
@@ -18,6 +22,7 @@ const SLOW_LOAD_MS = 6_000; // after this, tell the user the server is probably 
 //    a card recovers on its own soon after the cause is fixed instead of waiting a full interval
 const useResource = (path, intervalMs, { enabled = true, errorIntervalMs = null } = {}) => {
   const navigate = useNavigate();
+  const loadedOnce = useRef(false);
   const [reloadKey, setReloadKey] = useState(0);
   const [state, setState] = useState({
     data: null,
@@ -51,8 +56,9 @@ const useResource = (path, intervalMs, { enabled = true, errorIntervalMs = null 
         }
       }, SLOW_LOAD_MS);
       try {
-        const res = await api.get(path);
+        const res = await api.get(path, loadedOnce.current ? {} : { timeout: FIRST_LOAD_TIMEOUT_MS });
         if (!cancelled) {
+          loadedOnce.current = true;
           setState({ data: res.data, settledPath: path, error: null, errorStatus: null, slow: false });
         }
       } catch (err) {
