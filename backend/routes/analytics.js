@@ -3,17 +3,26 @@ const router = express.Router();
 const axios = require("axios");
 const Activity = require("../models/Activity");
 const authMiddleware = require("../middleware/authMiddleware");
-const mongoose = require("mongoose");
+const { buildHourlyTrend } = require("../services/focus");
+const { isValidTimeZone, localDate, zonedToUtc } = require("../services/tz");
 
 const ML_URL = "https://aura-ml-hshh.onrender.com";
 
+// The ML service is not public: it only answers requests carrying this secret.
+const mlHeaders = () => ({
+  "X-Aura-Secret": process.env.ML_SHARED_SECRET || "",
+});
+
+// DEPRECATED: the dashboard now uses GET /api/live (no ML service, one scoring engine).
+// Kept for one release so a dashboard tab opened before the deploy keeps working.
+// Delete this route, mlHeaders and ML_URL once the new frontend is live.
 router.get("/", authMiddleware, async (req, res) => {
   try {
     const mlData = await axios.get(
       `${ML_URL}/analytics?user_id=${req.user.id}`,
       {
         timeout: 25000,
-        headers: { Connection: "keep-alive" },
+        headers: { Connection: "keep-alive", ...mlHeaders() },
       },
     );
 
@@ -93,87 +102,31 @@ router.get("/", authMiddleware, async (req, res) => {
   }
 });
 
+// Today's focus by hour in the caller's time zone (?tz=Asia/Kolkata, default UTC for
+// older clients). Computed from MongoDB with the same rules as /api/live, so the chart
+// and the score card can't disagree. Hours with no activity are `null`, not 0.
 router.get("/daily-trend", authMiddleware, async (req, res) => {
+  const tz = req.query.tz === undefined ? "UTC" : req.query.tz;
+  if (!isValidTimeZone(tz)) {
+    return res.status(400).json({ error: "Invalid timezone" });
+  }
+
   try {
-    const mlData = await axios.get(
-      `${ML_URL}/hourly-trend?user_id=${req.user.id}`,
-      { timeout: 25000 },
-    );
+    const now = new Date();
+    const { y, m, d } = localDate(now, tz);
+    const startOfLocalDay = zonedToUtc(y, m, d, 0, tz);
 
-    if (!Array.isArray(mlData.data)) {
-      throw new Error("ML service returned an unexpected shape");
-    }
+    const rows = await Activity.find({
+      user: req.user.id,
+      timestamp: { $gte: startOfLocalDay },
+    })
+      .select("app_name window_title site category timestamp")
+      .lean();
 
-    const formatted = mlData.data.map((item) => ({
-      time: item.hour,
-      score: item.score,
-    }));
-    return res.json(formatted);
+    res.json(buildHourlyTrend(rows, tz, now));
   } catch (err) {
-    console.error("HOURLY TREND ML ERROR:", err.message);
-
-    try {
-      const startOfDay = new Date();
-      startOfDay.setUTCHours(0, 0, 0, 0);
-      const activities = await Activity.aggregate([
-        {
-          $match: {
-            user: new mongoose.Types.ObjectId(req.user.id),
-            timestamp: { $gte: startOfDay },
-          },
-        },
-        {
-          $group: {
-            _id: { $hour: "$timestamp" },
-            focusPoints: {
-              $sum: {
-                $cond: [
-                  {
-                    $in: [
-                      "$app_name",
-                      [
-                        "Visual Studio Code",
-                        "Code",
-                        "Cursor",
-                        "Terminal",
-                        "iTerm2",
-                        "Postman",
-                        "IntelliJ",
-                        "PyCharm",
-                        "Claude",
-                        "ChatGPT",
-                      ],
-                    ],
-                  },
-                  10,
-                  2,
-                ],
-              },
-            },
-          },
-        },
-        { $sort: { _id: 1 } },
-      ]);
-
-      const pointsByHour = new Map(
-        activities.map((item) => [item._id, item.focusPoints]),
-      );
-      const formattedData = Array.from({ length: 24 }, (_, hour) => {
-        const focusPoints = pointsByHour.get(hour);
-        const score =
-          focusPoints === undefined
-            ? 0
-            : Math.min(Math.max(Math.round(focusPoints / 5), 20), 100);
-        const bucketTime = new Date(startOfDay);
-        bucketTime.setUTCHours(hour);
-        return { time: bucketTime.toISOString(), score };
-      });
-
-      res.json(formattedData);
-    } catch (fallbackErr) {
-      console.error("DB AGGREGATION ERROR:", fallbackErr.message);
-      res.status(500).json({ error: "Could not fetch history" });
-    }
+    console.error("DAILY TREND ERROR:", err.message);
+    res.status(500).json({ error: "Could not fetch history" });
   }
 });
 

@@ -1,5 +1,4 @@
-const path = require("path");
-require("dotenv").config({ path: path.join(__dirname, ".env") });
+require("./config/env")(); // .env.local > .env
 const mongoose = require("mongoose");
 const Activity = require("./models/Activity");
 

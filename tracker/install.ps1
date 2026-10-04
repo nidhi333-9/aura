@@ -1,8 +1,18 @@
 # Aura Sensor installer (Windows)
 #
 # Run from PowerShell:
-#   irm https://raw.githubusercontent.com/nidhi333-9/aura/main/tracker/install.ps1 | iex
+#   $env:AURA_PAIR_CODE="ABCDE-FGHJK"; irm https://raw.githubusercontent.com/nidhi333-9/aura/main/tracker/install.ps1 | iex
+#
+# AURA_PAIR_CODE is the one-time code from "Connect a sensor" in your Aura dashboard (valid for
+# 10 minutes, single use). The sensor trades it for its own key; no login token is ever written
+# to disk or typed into the shell. Without a code the sensor asks for one when it starts.
 $ErrorActionPreference = "Stop"
+
+if ($env:AURA_TOKEN -and -not $env:AURA_PAIR_CODE) {
+    Write-Host "This install command is out of date: it carries a login token, which Aura no longer uses."
+    Write-Host "Reload your Aura dashboard and copy the new command from 'Connect a sensor'."
+    return
+}
 
 $Repo = "nidhi333-9/aura"
 $InstallDir = "$env:USERPROFILE\.aura"
@@ -18,12 +28,6 @@ Invoke-WebRequest -Uri $ZipUrl -OutFile $ZipPath
 Write-Host "Extracting..."
 Expand-Archive -Path $ZipPath -DestinationPath $InstallDir -Force
 
-if ($env:AURA_TOKEN) {
-    $TokenFile = "$env:USERPROFILE\.aura_token"
-    $Payload = @{ token = $env:AURA_TOKEN } | ConvertTo-Json -Compress
-    Set-Content -Path $TokenFile -Value $Payload
-    Write-Host "Signed in as your current dashboard session."
-}
-
 Write-Host "Starting Aura Sensor..."
+# AURA_PAIR_CODE (if given) is inherited by the sensor, which pairs itself with it.
 & "$ExtractDir\aura-sensor-windows.exe"

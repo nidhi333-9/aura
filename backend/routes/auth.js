@@ -3,11 +3,11 @@ const router = express.Router();
 const axios = require("axios");
 const User = require("../models/User");
 const jwt = require("jsonwebtoken");
+const authMiddleware = require("../middleware/authMiddleware");
 
 router.post("/google", async (req, res) => {
   try {
     const { token } = req.body;
-    console.log("TOKEN RECEIVED: ", token);
 
     const response = await axios.get(
       "https://openidconnect.googleapis.com/v1/userinfo",
@@ -36,18 +36,26 @@ router.post("/google", async (req, res) => {
         picture: user.picture,
       });
     }
-    const jwtToken = jwt.sign(
-      { id: existingUser._id },
-      process.env.JWT_SECRET || "secretkey",
-      {
-        expiresIn: "7d",
-      },
-    );
-    console.log("SENDING TOKEN:", jwtToken);
+    const jwtToken = jwt.sign({ id: existingUser._id }, process.env.JWT_SECRET, {
+      expiresIn: "7d",
+    });
     res.json({ user: existingUser, token: jwtToken });
   } catch (err) {
     console.error("GOOGLE ERROR FULL:", err.response?.data);
     res.status(401).json({ error: "Invalid token" });
+  }
+});
+
+// Lightweight token check for the sensor and landing page: 200 if the token is
+// valid and the user still exists, 401 otherwise. Replaces using GET /dashboard
+// (which returns up to 500 activity rows) just to validate a token.
+router.get("/me", authMiddleware, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(401).json({ message: "User not found" });
+    res.json({ user });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to load user" });
   }
 });
 

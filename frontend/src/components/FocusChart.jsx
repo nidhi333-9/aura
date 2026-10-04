@@ -24,7 +24,7 @@ const CustomTooltip = ({ active, payload, label }) => {
         {label}
       </p>
       <p className="text-lg font-extrabold text-[#818cf8]">
-        {payload[0].value}% focus
+        {payload[0].value == null ? "No data" : `${payload[0].value}% focus`}
       </p>
     </div>
   );
@@ -68,6 +68,20 @@ const FocusChart = ({ data, liveScore }) => {
   }
 
   const current = currentIndex !== -1 ? chartData[currentIndex] : null;
+
+  // Hours with no data are gaps in the line. A single hour between two gaps would draw
+  // nothing at all, so give just those a dot.
+  const renderDot = ({ cx, cy, index, payload }) => {
+    const isolated =
+      payload?.score != null &&
+      chartData[index - 1]?.score == null &&
+      chartData[index + 1]?.score == null;
+    return isolated ? (
+      <circle key={`dot-${index}`} cx={cx} cy={cy} r={3.5} fill="#6366f1" />
+    ) : (
+      <g key={`dot-${index}`} />
+    );
+  };
 
   return (
     <ResponsiveContainer width="100%" height="100%">
@@ -118,6 +132,7 @@ const FocusChart = ({ data, liveScore }) => {
           strokeWidth={3}
           fillOpacity={1}
           fill="url(#colorFocus)"
+          dot={renderDot}
           activeDot={<ActiveDot />}
           animationDuration={800}
         />
@@ -137,15 +152,17 @@ const FocusChart = ({ data, liveScore }) => {
                 fontWeight: 700,
               }}
             />
-            <ReferenceDot
-              x={current.label}
-              y={current.score}
-              r={5}
-              fill="#6366f1"
-              stroke="#ffffff"
-              strokeWidth={2}
-              isFront
-            />
+            {current.score != null && (
+              <ReferenceDot
+                x={current.label}
+                y={current.score}
+                r={5}
+                fill="#6366f1"
+                stroke="#ffffff"
+                strokeWidth={2}
+                isFront
+              />
+            )}
           </>
         )}
       </AreaChart>

@@ -1,108 +1,51 @@
-import { useState, useEffect } from "react";
-import axios from "axios";
-import { useNavigate } from "react-router-dom";
-const API_URL = import.meta.env.VITE_API_URL;
+import { useEffect, useState } from "react";
+import { api } from "../api/client";
+import { browserTimeZone } from "../utils/timezone";
+import useResource from "./useResource";
 
-const useAuraData = () => {
-  const navigate = useNavigate();
-  const [data, setData] = useState({
-    userData: null,
-    analytics: null,
-    focusHistory: [],
-    video: null,
-    category: null,
-    loading: true,
-  });
+const LIVE_INTERVAL_MS = 10_000;
+const TREND_INTERVAL_MS = 60_000;
 
-  const token = localStorage.getItem("token");
+// The server computes the state once; this only maps it to a YouTube query type.
+// No state (nothing tracked in the live window) behaves like a score of 0.
+const VIDEO_TYPE_BY_STATE = {
+  deep_focus: "focus",
+  calm_flow: "relax",
+  low_energy: "boost",
+};
 
-  // 1. Initial load
+// `trendEnabled`: today's hourly chart is only on screen in the Today view, so the Week and
+// Month tabs don't need to keep re-querying it.
+const useAuraData = ({ trendEnabled = true } = {}) => {
+  // "Today" is the user's day, not UTC, so tell the server which time zone that is.
+  const live = useResource("/api/live", LIVE_INTERVAL_MS);
+  const trend = useResource(
+    `/api/analytics/daily-trend?tz=${encodeURIComponent(browserTimeZone())}`,
+    TREND_INTERVAL_MS,
+    { enabled: trendEnabled },
+  );
+
+  const [video, setVideo] = useState(null);
+  const category = live.data
+    ? (VIDEO_TYPE_BY_STATE[live.data.state?.key] ?? "boost")
+    : null;
+
   useEffect(() => {
-    if (!token) return navigate("/", { replace: true });
-
-    const initLoad = async () => {
-      try {
-        const auth = { headers: { Authorization: `Bearer ${token}` } };
-        const [userRes, trendRes] = await Promise.all([
-          axios.get(`${API_URL}/dashboard`, auth),
-          axios.get(`${API_URL}/api/analytics/daily-trend`, auth),
-        ]);
-
-        setData((prev) => ({
-          ...prev,
-          userData: userRes.data,
-          focusHistory: trendRes.data,
-          loading: false,
-        }));
-      } catch (err) {
-        if (err.response?.status === 401) navigate("/");
-        setData((prev) => ({ ...prev, loading: false }));
-      }
+    if (!category) return undefined;
+    let cancelled = false;
+    api
+      .get("/api/youtube-recommendation", { params: { type: category } })
+      .then((res) => {
+        if (cancelled || !res.data?.length) return;
+        setVideo(res.data[Math.floor(Math.random() * res.data.length)]);
+      })
+      .catch(() => {}); // the recommendation is decoration; never break the page for it
+    return () => {
+      cancelled = true;
     };
-    initLoad();
-  }, [token, navigate]);
+  }, [category]);
 
-  // 2. Live stat cards — every 5s
-  useEffect(() => {
-    if (!token || data.loading) return;
-
-    const fetchLiveStats = async () => {
-      try {
-        const auth = { headers: { Authorization: `Bearer ${token}` } };
-        const res = await axios.get(`${API_URL}/api/analytics`, auth);
-        setData((prev) => ({ ...prev, analytics: res.data }));
-      } catch (err) {
-        console.error("Live fetch error", err);
-      }
-    };
-
-    fetchLiveStats();
-    const interval = setInterval(fetchLiveStats, 5000);
-    return () => clearInterval(interval);
-  }, [token, data.loading]);
-
-  // 3. Refresh the chart — every 30s, replaces the series wholesale so it's always one consistent timeline
-  useEffect(() => {
-    if (!token || data.loading) return;
-
-    const fetchTrend = async () => {
-      try {
-        const auth = { headers: { Authorization: `Bearer ${token}` } };
-        const res = await axios.get(
-          `${API_URL}/api/analytics/daily-trend`,
-          auth,
-        );
-        setData((prev) => ({ ...prev, focusHistory: res.data }));
-      } catch (err) {
-        console.error("Trend fetch error", err);
-      }
-    };
-
-    const interval = setInterval(fetchTrend, 30000);
-    return () => clearInterval(interval);
-  }, [token, data.loading]);
-
-  // 4. YouTube recommendations
-  useEffect(() => {
-    if (!data.analytics) return;
-    const score = data.analytics.focus_score;
-    const newCat = score > 70 ? "focus" : score > 40 ? "relax" : "boost";
-    if (newCat !== data.category) {
-      axios
-        .get(`${API_URL}/api/youtube-recommendation?type=${newCat}`)
-        .then((res) => {
-          if (res.data && res.data.length > 0) {
-            setData((prev) => ({
-              ...prev,
-              category: newCat,
-              video: res.data[Math.floor(Math.random() * res.data.length)],
-            }));
-          }
-        });
-    }
-  }, [data.analytics?.focus_score]);
-
-  return data;
+  return { live, trend, video, category };
 };
 
 export default useAuraData;

@@ -1,7 +1,12 @@
 import { useGoogleLogin } from "@react-oauth/google";
-import axios from "axios";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { api } from "../api/client";
+import { buildSensorCallbackUrl } from "../utils/sensorCallback.js";
+
+// Signing in may be the first request after the free-tier backend went to sleep and has to wake
+// up (up to about a minute), so it waits longer than the client's default timeout.
+const LOGIN_TIMEOUT_MS = 90_000;
 
 export const useAuth = () => {
   const navigate = useNavigate();
@@ -12,34 +17,24 @@ export const useAuth = () => {
       "https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email",
     onSuccess: async (tokenResponse) => {
       setLoading(true);
-      console.log("Sending token:", tokenResponse);
       try {
-        const res = await axios.post(
-          "https://aura-backend-hmq3.onrender.com/auth/google",
-          {
-            token: tokenResponse.access_token,
-          },
+        const res = await api.post(
+          "/auth/google",
+          { token: tokenResponse.access_token },
+          { skipAuth: true, timeout: LOGIN_TIMEOUT_MS },
         );
-        console.log("aura token: ", res.data.token);
         if (res.data.token) {
           localStorage.setItem("token", res.data.token);
           localStorage.setItem("user", JSON.stringify(res.data.user));
           const params = new URLSearchParams(window.location.search);
-          const callback = params.get("callback");
-          if (callback) {
-            window.location.href = `${callback}?token=${res.data.token}`;
+          const sensorUrl = buildSensorCallbackUrl(
+            params.get("callback"),
+            res.data.token,
+          );
+          if (sensorUrl) {
+            window.location.href = sensorUrl; // hand it back to the sensor (loopback only)
             return;
           }
-          // try {
-          //   await axios.post(
-          //     "https://aura-production-f392.up.railway.app/save-token",
-          //     {
-          //       token: res.data.token,
-          //     },
-          //   );
-          // } catch (err) {
-          //   console.warn("Could not save token for sensor: ", err.message);
-          // }
           navigate("/dashboard", { replace: true });
         }
       } catch (err) {
