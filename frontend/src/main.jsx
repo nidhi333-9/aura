@@ -6,6 +6,7 @@ import { GoogleOAuthProvider } from "@react-oauth/google";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Dashboard from "./components/Dashboard.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
+import Privacy from "./components/Privacy.jsx";
 
 createRoot(document.getElementById("root")).render(
   <GoogleOAuthProvider clientId="634097304955-gp72tp0i0vriduko4clfrnke2i69o1p4.apps.googleusercontent.com">
@@ -13,6 +14,7 @@ createRoot(document.getElementById("root")).render(
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<App />} />
+          <Route path="/privacy" element={<Privacy />} />
           <Route
             path="/dashboard"
             element={

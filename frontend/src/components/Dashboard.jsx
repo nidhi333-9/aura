@@ -14,6 +14,7 @@ import {
 import TopSites from "./TopSites";
 import StatusBanner from "./StatusBanner";
 import SensorSetup from "./SensorSetup";
+import DataControls from "./DataControls";
 import HistoryView from "./history/HistoryView";
 
 const VIEWS = [
@@ -356,9 +357,14 @@ const Dashboard = () => {
 
         <SensorSetup />
 
+        <DataControls />
+
         {/* 6. FOOTER */}
         <div className="w-full text-center text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 mt-24 pb-12">
-          Aura System Protocol © 2026 • Privacy Secured 🔒
+          Aura © 2026 •{" "}
+          <a href="/privacy" className="underline underline-offset-4 hover:text-gray-600">
+            Privacy
+          </a>
         </div>
       </div>
     </div>

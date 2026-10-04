@@ -3,6 +3,7 @@ const router = express.Router();
 const ingestAuth = require("../middleware/ingestAuth"); // device key (or legacy session token)
 const Activity = require("../models/Activity");
 const { classify, normalizeDomain } = require("../services/classify");
+const { redactTitle } = require("../services/privacy");
 const { recordSample } = require("../services/rollups");
 
 const MAX_APP_NAME = 200;
@@ -26,7 +27,9 @@ router.post("/log-activity", ingestAuth, async (req, res) => {
     return res.status(400).json({ error: "app_name is required" });
   }
   const appName = app_name.trim().slice(0, MAX_APP_NAME);
-  const title = (typeof window_title === "string" ? window_title : "").slice(
+  // Addresses in titles carry login tokens and codes: hide those before anything is classified or
+  // stored (services/privacy.js), whichever sensor version sent it.
+  const title = redactTitle(typeof window_title === "string" ? window_title : "").slice(
     0,
     MAX_WINDOW_TITLE,
   );

@@ -5,6 +5,7 @@ const jwt = require("jsonwebtoken");
 process.env.JWT_SECRET = "unit-test-secret";
 
 const Device = require("../models/Device");
+const User = require("../models/User");
 const ingestAuth = require("../middleware/ingestAuth");
 const { sha256 } = require("../services/pairing");
 
@@ -80,6 +81,7 @@ test("an empty key is rejected without touching the database", async () => {
 
 test("anything that is not a Device header falls back to the session-token check", async () => {
   Device.findOne = () => { throw new Error("must not be consulted"); };
+  User.exists = async () => ({ _id: "user9" });
 
   let out = await run(`Bearer ${jwt.sign({ id: "user9" }, process.env.JWT_SECRET)}`);
   assert.equal(out.nexted, true);
@@ -89,4 +91,27 @@ test("anything that is not a Device header falls back to the session-token check
   assert.equal(out.status, 401);
   out = await run(undefined);
   assert.equal(out.status, 401);
+});
+
+test("a session token for a deleted account is refused (no data may be written for a user who is gone)", async () => {
+  Device.findOne = () => { throw new Error("must not be consulted"); };
+  User.exists = async () => null;
+  const out = await run(`Bearer ${jwt.sign({ id: "deleted-user" }, process.env.JWT_SECRET)}`);
+  assert.equal(out.status, 401);
+  assert.equal(out.nexted, false);
+});
+
+test("a database failure while checking the account is a 500, not a 401", async () => {
+  User.exists = async () => { throw new Error("connection lost"); };
+  const out = await run(`Bearer ${jwt.sign({ id: "user9" }, process.env.JWT_SECRET)}`);
+  assert.equal(out.status, 500);
+  assert.equal(out.nexted, false);
+});
+
+test("a bad token never reaches the account lookup", async () => {
+  let looked = false;
+  User.exists = async () => { looked = true; return {}; };
+  const out = await run("Bearer not-a-jwt");
+  assert.equal(out.status, 401);
+  assert.equal(looked, false);
 });
