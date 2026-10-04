@@ -267,21 +267,29 @@ three real types (each search costs 100 of the daily YouTube quota, so it must n
 Counters live in the server's memory: they reset on a restart, which is right for one server. Code:
 `backend/middleware/limits.js` (the numbers are all in `DEFAULTS` at the top).
 
-**Which address is the caller's?** Behind Render's proxy every request arrives from the proxy, so Express must be told how
-many proxies to believe (`TRUST_PROXY_HOPS`, default 1). Too low and callers look alike; too high and a caller can invent
-their address with an `X-Forwarded-For` header. To check it against the real host, call it with a made-up header and
-confirm the made-up value does **not** come back as `ip`:
+**Which address is the caller's?** Behind Render's proxies every request arrives from a proxy, so Express must be told
+how many proxies to believe (`TRUST_PROXY_HOPS`). This was **measured** on 4 Oct 2026, not guessed: a request reaches
+the backend as `X-Forwarded-For: <caller>, <a Cloudflare server>, <Render's balancer>`, plus one more Render proxy that
+opens the connection. That is **3** proxies to trust (the default); the caller's address is the first one beyond them.
+Anything a caller invents sits further to the left, so it is never believed. With 1 or 2, every caller looks like a
+Render or Cloudflare machine (and shares one limit); with 4, a caller could pass an invented address off as their own.
+
+If the host or its setup ever changes, check again: `ip` must be **your own public address** (compare it with what
+a service like `curl https://api.ipify.org` says), and an address you invent must never come back as `ip`:
 
 ```bash
+curl -s https://aura-backend-hmq3.onrender.com/api/network-check
 curl -s -H "X-Forwarded-For: 9.9.9.9" https://aura-backend-hmq3.onrender.com/api/network-check
 ```
+
+`backend/test/limits.test.js` keeps the three real header chains Render sent, so a change to the default fails a test.
 
 ## 9. Where it runs, and its settings
 
 | Service | Host | Settings it needs |
 | --- | --- | --- |
 | Dashboard | Vercel (rebuilds when `main` changes) | `VITE_API_URL`: the backend's address. |
-| Backend | Render (redeploys when `main` changes) | `MONGO_URI`, `JWT_SECRET` (required), `ML_SHARED_SECRET`, `YOUTUBE_API_KEY`, optional `PAIR_CODE_TTL_SECONDS`, `TRUST_PROXY_HOPS` (default 1), `RATE_LIMIT_DISABLED` (`true` switches every request limit off). |
+| Backend | Render (redeploys when `main` changes) | `MONGO_URI`, `JWT_SECRET` (required), `ML_SHARED_SECRET`, `YOUTUBE_API_KEY`, optional `PAIR_CODE_TTL_SECONDS`, `TRUST_PROXY_HOPS` (default 3), `RATE_LIMIT_DISABLED` (`true` switches every request limit off). |
 | ML service | Render | `MONGO_URI` (use a read-only user), `ML_SHARED_SECRET`. |
 | Database | MongoDB Atlas | n/a |
 | Sensor builds | GitHub Actions, on a tag like `v1.1.2` | n/a (see below) |
@@ -334,7 +342,7 @@ Honest list, most important first:
 2. **Free tiers.** The backend sleeps when idle (about a minute to wake) and the free database is 512 MB.
 3. **Request limits are counted in the server's memory** (section 8): they reset when it restarts, which is fine for one server
    but would need a shared store if the backend ever ran as several. Re-check `TRUST_PROXY_HOPS` with `/api/network-check`
-   after any change of host.
+   after any change of host (the default, 3, was measured on Render).
 4. **Google sign-in** may be limited to listed test users if the Google Cloud project is in "Testing" mode.
 5. **Platforms.** The installers expect an Apple Silicon Mac or Windows. There is no Intel Mac build, the
    Windows installer has never been run by the author, the Windows program is unsigned, and Windows does not

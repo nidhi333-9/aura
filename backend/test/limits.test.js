@@ -176,10 +176,35 @@ test("RATE_LIMIT_DISABLED=true switches every limit off", async () => {
   close();
 });
 
-test("trustProxyHops reads TRUST_PROXY_HOPS and falls back to 1 on anything odd", () => {
-  assert.equal(trustProxyHops(undefined), 1);
-  assert.equal(trustProxyHops(""), 1);
+test("trustProxyHops defaults to the measured value for Render and falls back to it on anything odd", () => {
+  assert.equal(trustProxyHops(undefined), 3);
+  assert.equal(trustProxyHops(""), 3);
   assert.equal(trustProxyHops("2"), 2);
   assert.equal(trustProxyHops("0"), 0);
-  for (const bad of ["abc", "-1", "1.5", "true", "Infinity"]) assert.equal(trustProxyHops(bad), 1, bad);
+  for (const bad of ["abc", "-1", "1.5", "true", "Infinity"]) assert.equal(trustProxyHops(bad), 3, bad);
+});
+
+// The three real X-Forwarded-For values Render sent on 4 Oct 2026 (the caller was 14.139.241.90;
+// the middle entry is a Cloudflare server, the last Render's balancer; the test's own connection
+// plays the part of the one proxy that is not in the header).
+test("with the default, Render's real header chains give the caller's real address", async () => {
+  const networkRouter = require("../routes/network");
+  const { base, close } = await serve((app) => {
+    app.set("trust proxy", trustProxyHops());
+    app.use("/api", networkRouter);
+  }, { trustProxy: trustProxyHops() });
+  const realChains = [
+    "14.139.241.90, 162.158.235.207, 10.31.0.148",
+    "9.9.9.9,14.139.241.90, 104.23.209.99, 10.25.236.5", //          caller invented 9.9.9.9
+    "9.9.9.9, 8.8.8.8,14.139.241.90, 172.69.94.242, 10.31.0.148", // caller invented two
+  ];
+  for (const chain of realChains) {
+    const body = await (await fetch(`${base}/api/network-check`, { headers: { "X-Forwarded-For": chain } })).json();
+    assert.equal(body.ip, "14.139.241.90", `chain: ${chain}`);
+    assert.equal(body.trusted_proxy_hops, 3);
+    assert.equal(body.forwarded_for_entries, chain.split(",").length);
+  }
+  const raw = await (await fetch(`${base}/api/network-check`, { headers: { "X-Forwarded-For": "10.1.2.3, 10.4.5.6" } })).text();
+  assert.ok(!raw.includes("10.4.5.6"), "the raw header (it holds the host's internal addresses) must not be echoed back");
+  close();
 });

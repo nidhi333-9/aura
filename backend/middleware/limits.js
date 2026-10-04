@@ -99,13 +99,21 @@ const createLimiters = (overrides = {}) => {
   return limits;
 };
 
-// How many proxies sit between the internet and this server. Render puts at least one there, and
-// the right number decides which address Express reports. TRUST_PROXY_HOPS overrides it; see
-// GET /api/network-check for how to check it against the real host.
+// How many proxies Express may believe when it works out the caller's address. The right number
+// is a fact about the host, so it was MEASURED, not guessed. On Render (checked on 4 Oct 2026 with
+// GET /api/network-check) a request reaches this server as:
+//     X-Forwarded-For: <caller>, <a Cloudflare server>, <Render's balancer>
+// and the connection itself comes from one more Render proxy. That is 3 proxies to trust: the
+// caller's address is the first one beyond them. Anything a caller invents sits further LEFT, so
+// it is never believed. Too low (1 or 2) every caller looks like a Render or Cloudflare machine;
+// too high (4) a caller could pass an invented address off as their own.
+// TRUST_PROXY_HOPS overrides it. If the host or its setup ever changes, re-check with
+// /api/network-check (see docs/ARCHITECTURE.md): `ip` must be the caller's real address.
+const DEFAULT_PROXY_HOPS = 3;
 const trustProxyHops = (value = process.env.TRUST_PROXY_HOPS) => {
-  if (value === undefined || value === "") return 1;
+  if (value === undefined || value === "") return DEFAULT_PROXY_HOPS;
   const hops = Number(value);
-  return Number.isInteger(hops) && hops >= 0 ? hops : 1;
+  return Number.isInteger(hops) && hops >= 0 ? hops : DEFAULT_PROXY_HOPS;
 };
 
 module.exports = Object.assign(createLimiters(), { createLimiters, trustProxyHops, DEFAULTS });
