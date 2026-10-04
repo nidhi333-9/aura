@@ -1,32 +1,22 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import illustration from "./assets/Events-cuate.svg";
 import GoogleButton from "./components/GoogleButton.jsx";
 import { useAuth } from "./hooks/useAuth.js";
 import { useNavigate } from "react-router-dom";
-import { buildSensorCallbackUrl } from "./utils/sensorCallback.js";
-import { Check, Copy, Terminal, Download } from "lucide-react";
-const MAC_INSTALL_CMD =
-  "curl -fsSL https://raw.githubusercontent.com/nidhi333-9/aura/main/tracker/install.sh | bash";
 
 function App() {
   const navigate = useNavigate();
   const { login, loading } = useAuth();
-  const [copied, setCopied] = useState(false);
 
-  const copyInstallCmd = () => {
-    navigator.clipboard.writeText(MAC_INSTALL_CMD);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
+  // Sensors from before device pairing opened this page with ?callback=http://localhost:... to log
+  // in. That way of connecting no longer exists, so say what to do instead of leaving the person
+  // wondering why nothing happens, and don't skip past this page.
+  const fromOldSensor = new URLSearchParams(window.location.search).has("callback");
+
   useEffect(() => {
     const token = localStorage.getItem("token");
-    const callback = new URLSearchParams(window.location.search).get(
-      "callback",
-    );
+    if (!token || fromOldSensor) return;
 
-    if (!token) return;
-
-    // Validate the token before using it, so a stale one isn't handed to the sensor.
     // Only a 401 means the token is bad; a cold-start 502 or a 5xx says nothing about it.
     fetch(`${import.meta.env.VITE_API_URL}/auth/me`, {
       headers: { Authorization: `Bearer ${token}` },
@@ -36,36 +26,11 @@ function App() {
           localStorage.removeItem("token"); // stale/invalid, force a fresh login
           return;
         }
-        const sensorUrl = buildSensorCallbackUrl(callback, token);
-        if (sensorUrl) {
-          window.location.href = sensorUrl; // hand it back to the sensor (loopback only)
-        } else {
-          navigate("/dashboard", { replace: true });
-        }
+        navigate("/dashboard", { replace: true });
       })
       .catch(() => {});
-  }, [navigate]);
+  }, [navigate, fromOldSensor]);
 
-  const steps = [
-    {
-      step: "01",
-      title: "Authenticate",
-      desc: "Log in with your Google account to sync preferences.",
-      icon: "👤",
-    },
-    {
-      step: "02",
-      title: "Install Sensor",
-      desc: "Download or run the light background sensor agent.",
-      icon: "💾",
-    },
-    {
-      step: "03",
-      title: "Analyze & Flow",
-      desc: "Launch Aura and start receiving real-time insights.",
-      icon: "🚀",
-    },
-  ];
   return (
     <div className="min-h-screen bg-[var(--aura-light)] relative overflow-hidden bg-grid-mesh flex flex-col">
       {/* 1. NAVBAR (Fixed top) */}
@@ -86,6 +51,19 @@ function App() {
       <div className="pt-32 pb-10 text-center relative z-20 px-6">
         <div className="absolute w-[400px] h-[400px] bg-[var(--aura-blue)] opacity-10 blur-[120px] rounded-full left-1/2 -translate-x-1/2 top-0 -z-10"></div>
 
+        {fromOldSensor && (
+          <div
+            role="status"
+            className="max-w-2xl mx-auto mb-10 px-5 py-4 rounded-2xl border bg-amber-50 text-amber-800 border-amber-200 text-sm font-medium text-left"
+          >
+            <p className="font-bold">This link came from an old Aura sensor, which no longer works.</p>
+            <p className="mt-1">
+              Sign in, open <b>Connect a sensor</b> on your dashboard, and run the new install command.
+              The old sensor can then be closed.
+            </p>
+          </div>
+        )}
+
         <h1 className="text-6xl md:text-7xl font-extrabold text-[var(--aura-dark)] leading-tight max-w-4xl mx-auto tracking-tight mb-6">
           Understand yourself
           <br /> without saying a word
@@ -95,9 +73,6 @@ function App() {
           <br />
           Transform insights into action, automatically.
         </p>
-        {/* <button className="mt-10 bg-gradient-to-r from-[var(--aura-blue)] to-[var(--aura-green)] text-white px-10 py-4 rounded-full font-bold shadow-lg hover:scale-105 transition-transform">
-          Continue with Google
-        </button> */}
         <GoogleButton />
       </div>
 
@@ -185,124 +160,6 @@ function App() {
         </div>
       </div>
 
-      {/* DOWNLOAD SECTION */}
-      {/* DOWNLOAD SECTION */}
-      {/* <section className="relative z-30 max-w-5xl mx-auto mb-32 px-4 w-full font-sans">
-        <div className="relative overflow-hidden bg-white/60 backdrop-blur-2xl rounded-[40px] md:rounded-[48px] p-8 md:p-14 border border-white/80 shadow-[0_32px_64px_-12px_rgba(0,0,0,0.08)]">
-          <div className="absolute -top-24 -right-24 w-72 h-72 bg-[var(--aura-blue)]/10 rounded-full blur-3xl pointer-events-none" />
-          <div className="absolute -bottom-24 -left-24 w-72 h-72 bg-purple-500/10 rounded-full blur-3xl pointer-events-none" />
-
-          <div className="max-w-xl mx-auto text-center mb-14">
-            <span className="inline-flex items-center gap-1.5 text-[var(--aura-blue)] font-bold tracking-widest uppercase text-[11px] bg-[var(--aura-blue)]/10 border border-[var(--aura-blue)]/20 px-4 py-1.5 rounded-full">
-              Quick Setup
-            </span>
-            <h2 className="text-3xl md:text-4xl font-extrabold text-[var(--aura-dark)] mt-4 mb-3 tracking-tight">
-              Ready to find your flow?
-            </h2>
-            <p className="text-gray-500 font-medium text-base">
-              Get Aura up and running on your machine in under two minutes.
-            </p>
-          </div>
-
-          <div className="relative grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-6 mb-14">
-            <div className="hidden md:block absolute top-10 left-[18%] right-[18%] h-[2px] bg-gradient-to-r from-transparent via-gray-200 to-transparent -z-0" />
-
-            {steps.map((item, idx) => (
-              <div
-                key={idx}
-                className="relative z-10 flex flex-col items-center text-center p-6 rounded-3xl bg-white/40 border border-white/60 hover:bg-white/80 hover:shadow-lg transition-all duration-300 group"
-              >
-                <div className="relative mb-5">
-                  <div className="w-16 h-16 bg-white rounded-2xl shadow-sm border border-gray-100/80 flex items-center justify-center text-2xl group-hover:scale-110 group-hover:shadow-md transition-all duration-300">
-                    {item.icon}
-                  </div>
-                  <span className="absolute -top-2 -right-2 bg-[var(--aura-blue)] text-white font-black text-[10px] px-2 py-0.5 rounded-full shadow-sm">
-                    {item.step}
-                  </span>
-                </div>
-
-                <h3 className="font-bold text-[var(--aura-dark)] text-lg mb-1">
-                  {item.title}
-                </h3>
-                <p className="text-gray-500 text-xs leading-relaxed max-w-[200px]">
-                  {item.desc}
-                </p>
-              </div>
-            ))}
-          </div>
-
-          <div className="flex flex-col items-center gap-6 max-w-2xl mx-auto">
-            <div className="flex flex-col sm:flex-row gap-4 justify-center items-stretch w-full">
-              <button
-                type="button"
-                onClick={copyInstallCmd}
-                className="group relative flex-1 flex items-center justify-between gap-3 bg-gray-900 hover:bg-black text-white px-5 py-3.5 rounded-2xl transition-all duration-300 shadow-xl shadow-gray-900/10 border border-gray-800"
-              >
-                <div className="flex items-center gap-3 overflow-hidden">
-                  <span className="text-xl shrink-0">🍎</span>
-                  <div className="flex flex-col items-start min-w-0">
-                    <span className="text-[10px] uppercase font-bold text-gray-400 leading-none mb-1">
-                      macOS Terminal
-                    </span>
-                    <code className="text-xs font-mono text-gray-200 truncate max-w-[180px] sm:max-w-[160px] md:max-w-[200px]">
-                      {MAC_INSTALL_CMD}
-                    </code>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-1.5 bg-white/10 group-hover:bg-white/20 px-3 py-1.5 rounded-xl transition-colors shrink-0">
-                  {copied ? (
-                    <>
-                      <Check className="w-3.5 h-3.5 text-emerald-400" />
-                      <span className="text-[11px] font-bold text-emerald-400 uppercase">
-                        Copied
-                      </span>
-                    </>
-                  ) : (
-                    <>
-                      <Copy className="w-3.5 h-3.5 text-gray-300" />
-                      <span className="text-[11px] font-bold text-gray-300 uppercase">
-                        Copy
-                      </span>
-                    </>
-                  )}
-                </div>
-              </button>
-
-              <a
-                href="https://github.com/nidhi333-9/aura/releases/latest/download/aura-sensor-windows.zip"
-                className="group flex-1 flex items-center justify-between gap-3 bg-[var(--aura-blue)] text-white px-5 py-3.5 rounded-2xl hover:brightness-110 transition-all duration-300 shadow-xl shadow-[var(--aura-blue)]/20"
-              >
-                <div className="flex items-center gap-3">
-                  <span className="text-xl">🪟</span>
-                  <div className="flex flex-col items-start">
-                    <span className="text-[10px] opacity-80 uppercase font-bold leading-none mb-1">
-                      Download for
-                    </span>
-                    <span className="font-bold text-sm leading-none">
-                      Windows .ZIP
-                    </span>
-                  </div>
-                </div>
-
-                <div className="bg-white/15 group-hover:bg-white/25 p-2 rounded-xl transition-colors">
-                  <Download className="w-4 h-4 text-white" />
-                </div>
-              </a>
-            </div>
-
-            <p className="text-xs text-gray-400 max-w-lg text-center leading-relaxed">
-              <span className="font-semibold text-gray-500">macOS:</span> Paste
-              into Terminal to bypass gatekeeper permissions.{" "}
-              <br className="hidden sm:inline" />
-              <span className="font-semibold text-gray-500">Windows:</span> If
-              SmartScreen appears, select{" "}
-              <span className="underline underline-offset-2">More info</span> →{" "}
-              <span className="underline underline-offset-2">Run anyway</span>.
-            </p>
-          </div>
-        </div>
-      </section> */}
       {/* FEATURES / VALUE PROP SECTION */}
       <section className="relative z-30 max-w-5xl mx-auto mb-32 px-4 w-full font-sans">
         <div className="relative overflow-hidden bg-white/60 backdrop-blur-2xl rounded-[40px] md:rounded-[48px] p-8 md:p-14 border border-white/80 shadow-[0_32px_64px_-12px_rgba(0,0,0,0.08)]">

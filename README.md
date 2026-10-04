@@ -43,7 +43,7 @@ Aura is an AI-powered productivity tracker that passively monitors your computer
 1. The desktop sensor looks at your front window every 10 seconds (on a Mac, also which website your browser is on)  
 2. It sends that to the backend with its own device key; the backend labels each moment Productive, Neutral, Distraction or Idle and stores it  
 3. The dashboard turns those labels into a live focus score, today's chart and week, month and 3-month history  
-4. The ML service is read-only and is no longer on the dashboard's path  
+4. The ML service is read-only and nothing calls it any more (its code stays for the training scripts)  
 
 The full picture, with diagrams, is in **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)**.
 
@@ -142,7 +142,6 @@ node scripts/redact-titles.js --apply
 ### Backend
 MONGO_URI=  
 JWT_SECRET= (required — the server refuses to start without it)  
-ML_SHARED_SECRET= (must match the ML service's value; without it analytics falls back to the DB)  
 YOUTUBE_API_KEY=  
 PAIR_CODE_TTL_SECONDS= (optional, default 600: how long a sensor pairing code stays valid)  
 TRUST_PROXY_HOPS= (optional, default 3, measured for Render: how many proxies Express believes when it works out a caller's address; check with `GET /api/network-check`, see docs/ARCHITECTURE.md)  

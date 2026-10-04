@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import {
   AreaChart,
   Area,
@@ -44,13 +45,24 @@ const ActiveDot = ({ cx, cy }) => (
   </g>
 );
 
+// The current time, refreshed once a minute, so "the current hour" is found from state instead of
+// reading the clock in the middle of drawing (which would give a different answer on every redraw).
+const useNow = () => {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 60_000);
+    return () => clearInterval(timer);
+  }, []);
+  return now;
+};
+
 const FocusChart = ({ data, liveScore }) => {
+  const now = useNow();
   const chartData = (data || []).map((d) => ({
     ...d,
     label: formatLocalHour(d.time),
   }));
 
-  const now = Date.now();
   let currentIndex = -1;
   chartData.forEach((point, i) => {
     const t = new Date(point.time).getTime();
