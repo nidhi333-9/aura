@@ -5,7 +5,7 @@ Aura is a productivity tracker that quietly notes which app or website is in fro
 
 ## 🖥️ Preview
 
-![Aura Dashboard](your-screenshot-or-gif-link)
+![Aura Dashboard](docs/preview.png)
 
 ## 🌐 Live Demo
 
