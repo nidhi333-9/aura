@@ -4,6 +4,8 @@ const express = require("express");
 const jwt = require("jsonwebtoken");
 
 process.env.JWT_SECRET = "unit-test-secret";
+// These tests are about what the routes do, not how often they may be called (see limits.test.js).
+process.env.RATE_LIMIT_DISABLED = "true";
 
 const Activity = require("../models/Activity");
 const DailyStat = require("../models/DailyStat");
@@ -23,7 +25,10 @@ test.before(async () => {
   await new Promise((resolve) => { server = app.listen(0, "127.0.0.1", resolve); });
   base = `http://127.0.0.1:${server.address().port}`;
 });
-test.after(() => server.close());
+test.after(() => {
+  delete process.env.RATE_LIMIT_DISABLED;
+  server.close();
+});
 
 const ME = "6ac2400000000000000000aa";
 const SOMEONE_ELSE = "6ac2400000000000000000bb";

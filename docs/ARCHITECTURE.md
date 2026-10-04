@@ -240,12 +240,48 @@ expire (see section 10).
 Every query is filtered by the caller's own user id. CORS only allows the Vercel site and
 `http://localhost:5173`. Secrets (`JWT_SECRET`, pairing codes, device keys) are never stored in plain text.
 
+### Request limits
+
+One caller (a bug, a script, an attacker) must not be able to use up the server, the database or the YouTube
+quota for everyone. The limits are far above real use (a sensor sends 6 samples a minute; the dashboard makes
+roughly 10 to 40 requests a minute). Going over one gives **429** with a `Retry-After` header; the sensor and the
+dashboard treat that as "try again soon", never as "you were removed".
+
+| What | Limit | Counted per |
+| --- | --- | --- |
+| Sensor samples (`POST /api/log-activity`) | 30 a minute | device |
+| Dashboard requests (every signed-in route) | 300 a minute | person |
+| Deleting data or an account | 10 an hour | person |
+| Google sign-in (`POST /auth/google`) | 60 a minute, and 20 rejected ones a minute | network address |
+| Pairing (`POST /api/devices/pair`) | 30 a minute, and 10 wrong codes a minute | network address |
+| Wrong device keys on ingest | 30 a minute | network address |
+
+Signed-in callers are counted as **that person or device**, not by network address, so a whole class behind one
+school connection does not use up each other's allowance. Addresses are used only where nobody is signed in yet,
+and those limits are generous so that even if addresses cannot be told apart, real users stay far below them.
+Failures are counted separately, so guessing is slow while getting it right the first time is never slowed.
+
+Also: request bodies are capped at 32 KB, and `GET /api/youtube-recommendation` needs a login and only accepts the
+three real types (each search costs 100 of the daily YouTube quota, so it must never be triggerable by a made-up value).
+
+Counters live in the server's memory: they reset on a restart, which is right for one server. Code:
+`backend/middleware/limits.js` (the numbers are all in `DEFAULTS` at the top).
+
+**Which address is the caller's?** Behind Render's proxy every request arrives from the proxy, so Express must be told how
+many proxies to believe (`TRUST_PROXY_HOPS`, default 1). Too low and callers look alike; too high and a caller can invent
+their address with an `X-Forwarded-For` header. To check it against the real host, call it with a made-up header and
+confirm the made-up value does **not** come back as `ip`:
+
+```bash
+curl -s -H "X-Forwarded-For: 9.9.9.9" https://aura-backend-hmq3.onrender.com/api/network-check
+```
+
 ## 9. Where it runs, and its settings
 
 | Service | Host | Settings it needs |
 | --- | --- | --- |
 | Dashboard | Vercel (rebuilds when `main` changes) | `VITE_API_URL`: the backend's address. |
-| Backend | Render (redeploys when `main` changes) | `MONGO_URI`, `JWT_SECRET` (required), `ML_SHARED_SECRET`, `YOUTUBE_API_KEY`, optional `PAIR_CODE_TTL_SECONDS`. |
+| Backend | Render (redeploys when `main` changes) | `MONGO_URI`, `JWT_SECRET` (required), `ML_SHARED_SECRET`, `YOUTUBE_API_KEY`, optional `PAIR_CODE_TTL_SECONDS`, `TRUST_PROXY_HOPS` (default 1), `RATE_LIMIT_DISABLED` (`true` switches every request limit off). |
 | ML service | Render | `MONGO_URI` (use a read-only user), `ML_SHARED_SECRET`. |
 | Database | MongoDB Atlas | n/a |
 | Sensor builds | GitHub Actions, on a tag like `v1.1.2` | n/a (see below) |
@@ -296,7 +332,9 @@ Honest list, most important first:
    account, and read a plain-language notice (`/privacy`), but there is no data export and raw samples never
    expire on their own (the expiry script exists but is switched off).
 2. **Free tiers.** The backend sleeps when idle (about a minute to wake) and the free database is 512 MB.
-3. **No request limits** on the backend.
+3. **Request limits are counted in the server's memory** (section 8): they reset when it restarts, which is fine for one server
+   but would need a shared store if the backend ever ran as several. Re-check `TRUST_PROXY_HOPS` with `/api/network-check`
+   after any change of host.
 4. **Google sign-in** may be limited to listed test users if the Google Cloud project is in "Testing" mode.
 5. **Platforms.** The installers expect an Apple Silicon Mac or Windows. There is no Intel Mac build, the
    Windows installer has never been run by the author, the Windows program is unsigned, and Windows does not

@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const ingestAuth = require("../middleware/ingestAuth"); // device key (or legacy session token)
+const limits = require("../middleware/limits");
 const Activity = require("../models/Activity");
 const { classify, normalizeDomain } = require("../services/classify");
 const { redactTitle } = require("../services/privacy");
@@ -20,7 +21,7 @@ const sampleTime = (clientTimestamp) => {
   return t;
 };
 
-router.post("/log-activity", ingestAuth, async (req, res) => {
+router.post("/log-activity", limits.authFails, ingestAuth, limits.ingest, async (req, res) => {
   const { app_name, window_title, timestamp, domain: reportedDomain } = req.body || {};
 
   if (typeof app_name !== "string" || !app_name.trim()) {

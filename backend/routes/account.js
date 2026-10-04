@@ -1,5 +1,5 @@
 const router = require("express").Router();
-const authMiddleware = require("../middleware/authMiddleware");
+const limits = require("../middleware/limits");
 const Activity = require("../models/Activity");
 const DailyStat = require("../models/DailyStat");
 const Device = require("../models/Device");
@@ -18,7 +18,7 @@ const NOT_CONFIRMED = {
 };
 
 // What Aura currently holds, so the dashboard can show it before anything is deleted.
-router.get("/summary", authMiddleware, async (req, res) => {
+router.get("/summary", limits.authed, async (req, res) => {
   const user = req.user.id;
   try {
     const [samples, first, days, devices] = await Promise.all([
@@ -41,7 +41,7 @@ router.get("/summary", authMiddleware, async (req, res) => {
 
 // Delete everything that was tracked (the raw samples with their window titles, and the daily
 // summaries). The account and the paired devices stay, and the sensor keeps working.
-router.delete("/data", authMiddleware, async (req, res) => {
+router.delete("/data", limits.authedDestructive, async (req, res) => {
   if (!confirmed(req)) return res.status(400).json(NOT_CONFIRMED);
   const user = req.user.id;
   try {
@@ -56,7 +56,7 @@ router.delete("/data", authMiddleware, async (req, res) => {
 
 // Delete the account and everything attached to it. Safe to repeat after a failure: it removes
 // the user record last, so a half-finished run still leaves an account that can try again.
-router.delete("/", authMiddleware, async (req, res) => {
+router.delete("/", limits.authedDestructive, async (req, res) => {
   if (!confirmed(req)) return res.status(400).json(NOT_CONFIRMED);
   const user = req.user.id;
   try {

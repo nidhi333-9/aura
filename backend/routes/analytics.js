@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const axios = require("axios");
 const Activity = require("../models/Activity");
-const authMiddleware = require("../middleware/authMiddleware");
+const limits = require("../middleware/limits");
 const { buildHourlyTrend } = require("../services/focus");
 const { isValidTimeZone, localDate, zonedToUtc } = require("../services/tz");
 
@@ -16,7 +16,7 @@ const mlHeaders = () => ({
 // DEPRECATED: the dashboard now uses GET /api/live (no ML service, one scoring engine).
 // Kept for one release so a dashboard tab opened before the deploy keeps working.
 // Delete this route, mlHeaders and ML_URL once the new frontend is live.
-router.get("/", authMiddleware, async (req, res) => {
+router.get("/", limits.authed, async (req, res) => {
   try {
     const mlData = await axios.get(
       `${ML_URL}/analytics?user_id=${req.user.id}`,
@@ -105,7 +105,7 @@ router.get("/", authMiddleware, async (req, res) => {
 // Today's focus by hour in the caller's time zone (?tz=Asia/Kolkata, default UTC for
 // older clients). Computed from MongoDB with the same rules as /api/live, so the chart
 // and the score card can't disagree. Hours with no activity are `null`, not 0.
-router.get("/daily-trend", authMiddleware, async (req, res) => {
+router.get("/daily-trend", limits.authed, async (req, res) => {
   const tz = req.query.tz === undefined ? "UTC" : req.query.tz;
   if (!isValidTimeZone(tz)) {
     return res.status(400).json({ error: "Invalid timezone" });
