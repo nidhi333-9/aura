@@ -51,7 +51,10 @@ Aura is an AI-powered productivity tracker that passively monitors your computer
 2. Login with Google  
 3. Open **Connect a sensor** on the dashboard and copy the install command (it contains a one-time pairing code, not your login)  
 4. Paste it into Terminal (macOS) or PowerShell (Windows). The sensor pairs itself and starts running  
-5. Start tracking your productivity in real time. Manage or remove paired devices under **Your devices**
+5. **On a Mac, allow two things once** (the dashboard shows the steps under the install command): System Settings →
+   Privacy & Security → *Accessibility* → turn on Terminal, and *Automation* → under Terminal turn on *System Events*
+   and your browser. Without them macOS hides window titles, and the dashboard and the sensor both say so  
+6. Start tracking your productivity in real time. Manage or remove paired devices under **Your devices**
 
 ## 💻 Local Development
 

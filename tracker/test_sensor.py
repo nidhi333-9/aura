@@ -132,6 +132,40 @@ class ReadTabAddress(unittest.TestCase):
                 self.assertEqual(sensor.get_domain("Google Chrome"), "example.com")
 
 
+class TitleCheck(unittest.TestCase):
+    def feed(self, check, samples):
+        return [check.unreadable(app, title) for app, title in samples]
+
+    def test_warns_once_after_enough_unreadable_titles_in_a_row(self):
+        check = sensor.TitleCheck(limit=3)
+        results = self.feed(check, [("Google Chrome", "Unknown")] * 6)
+        self.assertEqual(results, [False, False, True, False, False, False])
+
+    def test_a_readable_title_resets_the_count(self):
+        check = sensor.TitleCheck(limit=3)
+        samples = [("Terminal", "Unknown")] * 2 + [("Terminal", "zsh")] + [("Terminal", "Unknown")] * 2
+        self.assertEqual(self.feed(check, samples), [False] * 5)
+
+    def test_apps_without_titles_prove_nothing_either_way(self):
+        check = sensor.TitleCheck(limit=3)
+        self.assertEqual(self.feed(check, [("Finder", "Unknown")] * 20), [False] * 20)
+        self.assertEqual(self.feed(check, [("Desktop", "Home")] * 20), [False] * 20)
+        self.assertEqual(self.feed(check, [("Unknown", "Unknown")] * 20), [False] * 20)
+        # ...and they neither count towards nor interrupt a real streak
+        samples = [("Google Chrome", "Unknown"), ("Finder", "Unknown"), ("Google Chrome", "Unknown"), ("Google Chrome", "Unknown")]
+        self.assertEqual(self.feed(check, samples), [False, False, False, True])
+
+    def test_healthy_use_never_warns(self):
+        check = sensor.TitleCheck()
+        self.assertFalse(any(self.feed(check, [("Google Chrome", f"Page {i} - Google Chrome") for i in range(100)])))
+
+    def test_the_message_names_both_permissions(self):
+        self.assertIn("Accessibility", sensor.PERMISSION_HELP)
+        self.assertIn("Automation", sensor.PERMISSION_HELP)
+        self.assertIn("System Events", sensor.PERMISSION_HELP)
+        self.assertIn("Cmd+Q", sensor.PERMISSION_HELP)
+
+
 class Scripts(unittest.TestCase):
     def test_every_script_names_a_real_form(self):
         # The names must match what macOS reports for the app, or `tell application` fails.

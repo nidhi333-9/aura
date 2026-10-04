@@ -243,6 +243,42 @@ def get_domain(app_name):
     return domain_from_address(address) if address else None
 
 
+# --- noticing a missing macOS permission ------------------------------------------------
+# Without Accessibility + Automation (System Events) permission for the terminal app, macOS still
+# tells us WHICH app is in front but every window title comes back empty, and the sensor reports
+# "Unknown". Nothing crashes, so without a message the user just sees a dashboard full of
+# "Other website" and has no idea why.
+
+UNREADABLE_AFTER = 6  # samples in a row (about a minute) before saying anything
+# Apps that have no window title (or no app at all) say nothing about the permission.
+NO_TITLE_APPS = {"Unknown", "Desktop", "Finder"}
+
+PERMISSION_HELP = """⚠️  Aura can't read your window titles, so websites will show up as "Other website".
+   Your Mac needs two permissions for your terminal app (for example Terminal):
+     1. System Settings → Privacy & Security → Accessibility → turn on Terminal
+     2. System Settings → Privacy & Security → Automation → under Terminal, turn on System Events
+   Then quit Terminal completely (Cmd+Q), open it again and start the sensor again."""
+
+
+class TitleCheck:
+    """Says, exactly once, when window titles keep coming back unreadable."""
+
+    def __init__(self, limit=UNREADABLE_AFTER):
+        self.limit = limit
+        self.streak = 0
+        self.warned = False
+
+    def unreadable(self, app_name, title):
+        """True at the moment the warning should be shown."""
+        if app_name in NO_TITLE_APPS:
+            return False  # neither proof nor disproof; keep the streak as it is
+        self.streak = self.streak + 1 if title == "Unknown" else 0
+        if self.streak >= self.limit and not self.warned:
+            self.warned = True
+            return True
+        return False
+
+
 # --- sampling ---------------------------------------------------------------------------
 
 def get_window():
@@ -263,10 +299,13 @@ def start_sensor(device_key):
         print("ℹ️  Aura reads only the website's name from your browser (like linkedin.com, never the full address).")
         print("   If macOS asks to let your terminal control the browser, click OK. Private windows are skipped.")
     last_app = None
+    title_check = TitleCheck()
 
     try:
         while True:
             current_app, current_title = get_window()
+            if platform.system() == "Darwin" and title_check.unreadable(current_app, current_title):
+                print(PERMISSION_HELP)
             payload = {
                 "app_name": current_app,
                 "window_title": current_title,

@@ -341,4 +341,4 @@ const classify = (appName, windowTitle = "", domain = null) => {
   return { site: String(appName ?? "").replace(/\.exe$/i, ""), category: "Neutral" };
 };
 
-module.exports = { classify, normalizeDomain, CATEGORIES, SITE_DOMAINS, WEBSITE_RULES };
+module.exports = { classify, normalizeDomain, appKey, CATEGORIES, SITE_DOMAINS, WEBSITE_RULES };

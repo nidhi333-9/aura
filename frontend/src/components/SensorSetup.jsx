@@ -4,6 +4,7 @@ import { Check, Copy, Download, KeyRound, Laptop, Trash2 } from "lucide-react";
 import { api } from "../api/client";
 import useResource from "../hooks/useResource";
 import { timeAgo } from "../utils/format";
+import MacPermissions from "./MacPermissions";
 
 const RAW = "https://raw.githubusercontent.com/nidhi333-9/aura/main/tracker";
 // The code alphabet is [A-Z2-9] plus one dash, so it is safe in a shell with no quoting.
@@ -229,6 +230,8 @@ const SensorSetup = () => {
           </div>
         )}
       </div>
+
+      <MacPermissions />
 
       {/* devices */}
       <div className="max-w-2xl mx-auto mt-12 pt-8 border-t border-slate-200/70">

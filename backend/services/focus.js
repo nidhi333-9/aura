@@ -7,12 +7,20 @@
 //   - focus score = Productive samples / non-idle samples, as a whole percent.
 //   - state is derived from the score here, once, so the UI never has its own thresholds.
 
-const { classify, CATEGORIES } = require("./classify");
+const { classify, appKey, CATEGORIES } = require("./classify");
 const { localDate, zonedToUtc } = require("./tz");
 
 const LIVE_WINDOW_MINUTES = 30;
 const SENSOR_ONLINE_WITHIN_MS = 60 * 1000; // sensor posts every 10 s; allow a few misses
 const TOP_SITES_LIMIT = 10;
+
+// A macOS sensor without the Accessibility/Automation permissions still knows WHICH app is in
+// front but reports every window title as "Unknown". Flag it when nearly all recent samples are
+// like that, so the dashboard can tell the user what to allow instead of showing a silent mess.
+const TITLE_CHECK_MIN_SAMPLES = 6; // about a minute of use
+const TITLE_CHECK_UNREADABLE_SHARE = 0.8;
+// Apps that legitimately have no window title (or no app at all): never evidence either way.
+const TITLELESS_APPS = new Set(["unknown", "desktop", "finder", "explorer", "lockapp", "loginwindow"]);
 
 const STATES = {
   deep_focus: { key: "deep_focus", label: "Deep Focus" },
@@ -36,6 +44,18 @@ const labelOf = (row) =>
 
 const percent = (part, whole) => Math.round((part / whole) * 100);
 
+const titlesUnreadable = (rows) => {
+  const evidence = rows.filter(
+    (row) => typeof row.window_title === "string" && !TITLELESS_APPS.has(appKey(row.app_name)),
+  );
+  if (evidence.length < TITLE_CHECK_MIN_SAMPLES) return false;
+  const unreadable = evidence.filter((row) => {
+    const title = row.window_title.trim().toLowerCase();
+    return title === "" || title === "unknown";
+  }).length;
+  return unreadable / evidence.length >= TITLE_CHECK_UNREADABLE_SHARE;
+};
+
 // rows: samples inside the live window, newest first.
 // lastSeenAt: timestamp of the newest sample ever stored for the user (any category).
 const buildLive = (rows, lastSeenAt, now = Date.now()) => {
@@ -43,6 +63,7 @@ const buildLive = (rows, lastSeenAt, now = Date.now()) => {
   const sensor = {
     online: lastSeenMs != null && now - lastSeenMs <= SENSOR_ONLINE_WITHIN_MS,
     last_seen: lastSeenMs != null ? new Date(lastSeenMs).toISOString() : null,
+    titles_unreadable: titlesUnreadable(rows),
   };
 
   const active = rows

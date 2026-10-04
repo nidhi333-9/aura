@@ -118,7 +118,7 @@ test("buildLive: sensor online flag and last_seen", () => {
   const edge = new Date(NOW - SENSOR_ONLINE_WITHIN_MS);
   assert.equal(buildLive([], edge, NOW).sensor.online, true);
   assert.equal(buildLive([], new Date(NOW - SENSOR_ONLINE_WITHIN_MS - 1), NOW).sensor.online, false);
-  assert.deepEqual(buildLive([], null, NOW).sensor, { online: false, last_seen: null });
+  assert.deepEqual(buildLive([], null, NOW).sensor, { online: false, last_seen: null, titles_unreadable: false });
   assert.equal(buildLive([], edge, NOW).sensor.last_seen, iso(edge));
 });
 

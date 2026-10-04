@@ -51,6 +51,12 @@ const Dashboard = () => {
       ?.scrollIntoView({ behavior: "smooth", block: "center" });
   };
 
+  const scrollToPermissions = () => {
+    document
+      .getElementById("mac-permissions")
+      ?.scrollIntoView({ behavior: "smooth", block: "center" });
+  };
+
   const handleLogout = () => {
     localStorage.removeItem("token");
     navigate("/", { replace: true });
@@ -63,7 +69,11 @@ const Dashboard = () => {
       <div className="absolute w-[400px] h-[400px] bg-[var(--aura-green)] opacity-5 blur-[120px] rounded-full bottom-0 right-0 pointer-events-none"></div>
 
       <div className="relative z-10 max-w-7xl mx-auto w-full p-6 md:p-12">
-        <StatusBanner live={live} onInstallClick={scrollToInstall} />
+        <StatusBanner
+          live={live}
+          onInstallClick={scrollToInstall}
+          onPermissionsClick={scrollToPermissions}
+        />
 
         {/* 1. NAVBAR / HEADER */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-6">
