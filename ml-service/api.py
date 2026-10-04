@@ -1,20 +1,40 @@
-from fastapi import FastAPI, Query
-from fastapi.middleware.cors import CORSMiddleware
+import hmac
+import os
+
+from bson import ObjectId
+from fastapi import Depends, FastAPI, Header, HTTPException, Query
 from fastapi.responses import Response
 from core.processor import analyze_my_flow
 
-app = FastAPI()
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
+def require_secret(x_aura_secret: str = Header(default="")):
+    """Only the Express backend, which knows ML_SHARED_SECRET, may call this service.
+
+    Fails closed: if the secret isn't configured, every request is rejected.
+    """
+    expected = os.environ.get("ML_SHARED_SECRET", "")
+    if not expected or not hmac.compare_digest(x_aura_secret.encode(), expected.encode()):
+        raise HTTPException(status_code=401, detail="Unauthorized")
+
+
+def require_user_id(user_id: str = Query(None)):
+    """Every query is scoped to one user; a missing/invalid id is a client error."""
+    if not user_id or not ObjectId.is_valid(user_id):
+        raise HTTPException(status_code=400, detail="A valid user_id is required")
+    return user_id
+
+
+# No CORS middleware and no public docs: this is called server-to-server by Express only.
+app = FastAPI(
+    dependencies=[Depends(require_secret)],
+    docs_url=None,
+    redoc_url=None,
+    openapi_url=None,
 )
 
+
 @app.get("/analytics")
-def get_analytics(user_id: str = Query(None)):
+def get_analytics(user_id: str = Depends(require_user_id)):
     stats = analyze_my_flow(limit=150, user_id=user_id)
 
     if isinstance(stats, str):
@@ -44,7 +64,7 @@ async def favicon():
     return Response(status_code=204)
 
 @app.get("/hourly-trend")
-def get_trend(user_id: str = Query(None)):
+def get_trend(user_id: str = Depends(require_user_id)):
     try:
         from core.processor import get_hourly_stats
         data = get_hourly_stats(user_id=user_id)

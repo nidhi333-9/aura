@@ -6,7 +6,7 @@ const COLORS = [
   "#ec4899",
 ];
 
-const TopSites = ({ topSites, onInstallClick }) => {
+const TopSites = ({ topSites, loading, onInstallClick }) => {
   const sorted = topSites
     ? Object.entries(topSites)
         .sort((a, b) => b[1] - a[1])
@@ -22,7 +22,9 @@ const TopSites = ({ topSites, onInstallClick }) => {
 
       {sorted.length === 0 ? (
         <div className="flex flex-col items-center justify-center text-gray-400 py-10">
-          {onInstallClick ? (
+          {loading ? (
+            <p className="text-sm font-medium">Loading…</p>
+          ) : onInstallClick ? (
             <button
               type="button"
               onClick={onInstallClick}

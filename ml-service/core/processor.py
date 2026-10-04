@@ -3,8 +3,13 @@ from pymongo import MongoClient
 from bson import ObjectId
 from datetime import datetime, timezone
 import os
-from dotenv import load_dotenv
+from dotenv import find_dotenv, load_dotenv
 
+# .env.local (your local-development overrides) first, then .env. load_dotenv never replaces a
+# variable that is already set, so real environment variables win over both files, and
+# between the two files the first one loaded wins. .env often holds PRODUCTION values on a
+# developer machine, which is why local settings belong in .env.local.
+load_dotenv(find_dotenv(".env.local"))
 load_dotenv()
 
 MONGO_URI = os.environ.get("MONGO_URI", "mongodb://localhost:27017/aura")
@@ -60,12 +65,10 @@ def get_collection():
 
 
 def _user_filter(user_id=None):
-    if not user_id:
-        return {}
-    try:
-        return {"user": ObjectId(user_id)}
-    except Exception:
-        return {}
+    # Every query must be scoped to exactly one user. Never fall back to "all users".
+    if not user_id or not ObjectId.is_valid(user_id):
+        raise ValueError("a valid user_id is required")
+    return {"user": ObjectId(user_id)}
 
 
 def classify_activity(app_name, window_title=""):

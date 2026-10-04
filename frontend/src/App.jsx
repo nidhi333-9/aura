@@ -3,6 +3,7 @@ import illustration from "./assets/Events-cuate.svg";
 import GoogleButton from "./components/GoogleButton.jsx";
 import { useAuth } from "./hooks/useAuth.js";
 import { useNavigate } from "react-router-dom";
+import { buildSensorCallbackUrl } from "./utils/sensorCallback.js";
 import { Check, Copy, Terminal, Download } from "lucide-react";
 const MAC_INSTALL_CMD =
   "curl -fsSL https://raw.githubusercontent.com/nidhi333-9/aura/main/tracker/install.sh | bash";
@@ -23,13 +24,26 @@ function App() {
       "callback",
     );
 
-    if (token) {
-      if (callback) {
-        window.location.href = `${callback}?token=${token}`; // hand it back to the sensor
-        return;
-      }
-      navigate("/dashboard", { replace: true });
-    }
+    if (!token) return;
+
+    // Validate the token before using it, so a stale one isn't handed to the sensor.
+    // Only a 401 means the token is bad; a cold-start 502 or a 5xx says nothing about it.
+    fetch(`${import.meta.env.VITE_API_URL}/auth/me`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => {
+        if (res.status === 401) {
+          localStorage.removeItem("token"); // stale/invalid, force a fresh login
+          return;
+        }
+        const sensorUrl = buildSensorCallbackUrl(callback, token);
+        if (sensorUrl) {
+          window.location.href = sensorUrl; // hand it back to the sensor (loopback only)
+        } else {
+          navigate("/dashboard", { replace: true });
+        }
+      })
+      .catch(() => {});
   }, [navigate]);
 
   const steps = [
