@@ -1,9 +1,11 @@
 import json
 import os
 import platform
+import subprocess
 import sys
 import time
 from datetime import datetime, timezone
+from urllib.parse import urlsplit
 
 import pywinctl as pwc
 import requests
@@ -154,6 +156,93 @@ def ensure_device_key():
     return key
 
 
+# --- which website a browser is on ------------------------------------------------------
+# A window title doesn't always name the site (a ChatGPT chat is just called "Fix Port Conflict").
+# On macOS the browser itself can say which address its front tab is on. Only the HOST NAME ever
+# leaves this computer ("linkedin.com"): never the path or the query, which is where private
+# things live. Private/incognito windows are skipped. Without permission, or on other systems,
+# this quietly returns nothing and Aura falls back to guessing from the window title.
+
+AUTOMATION_RETRY_SECONDS = 300  # after a refusal, ask again this often (so granting it later works)
+OSASCRIPT_TIMEOUT = 3
+
+# Chromium-based browsers share one scripting vocabulary.
+_CHROMIUM_SCRIPT = """if application "{app}" is running then
+    tell application "{app}"
+        set windowMode to ""
+        try
+            set windowMode to mode of front window
+        end try
+        return (URL of active tab of front window) & linefeed & windowMode
+    end tell
+end if"""
+
+_SAFARI_SCRIPT = """if application "Safari" is running then
+    tell application "Safari" to return URL of front document
+end if"""
+
+# App name as macOS reports it -> AppleScript that returns the front tab's address.
+# Firefox can't be asked; it keeps using window titles.
+MAC_BROWSER_SCRIPTS = {
+    **{
+        app: _CHROMIUM_SCRIPT.format(app=app)
+        for app in ("Google Chrome", "Brave Browser", "Microsoft Edge", "Chromium", "Vivaldi", "Arc", "Opera")
+    },
+    "Safari": _SAFARI_SCRIPT,
+}
+
+_ask_again_after = {}  # app name -> time.monotonic() before which we don't ask (permission refused)
+_hint_shown = set()
+
+
+def domain_from_address(address):
+    """'https://www.linkedin.com/in/someone?x=1' -> 'linkedin.com'. Only http(s) pages have one."""
+    try:
+        parts = urlsplit((address or "").strip())
+        host = (parts.hostname or "").lower().rstrip(".")
+    except ValueError:
+        return None
+    if parts.scheme not in ("http", "https") or not host or len(host) > 253:
+        return None
+    return host[4:] if host.startswith("www.") else host
+
+
+def read_tab_address(app_name):
+    """Address of the browser's front tab, or None (not a browser we can ask, no window, a private
+    window, or macOS didn't allow it)."""
+    script = MAC_BROWSER_SCRIPTS.get(app_name) if platform.system() == "Darwin" else None
+    if script is None or time.monotonic() < _ask_again_after.get(app_name, 0):
+        return None
+    try:
+        result = subprocess.run(
+            ["osascript", "-e", script], capture_output=True, text=True, timeout=OSASCRIPT_TIMEOUT
+        )
+    except (OSError, subprocess.SubprocessError):
+        return None
+
+    if result.returncode != 0:
+        if "-1743" in result.stderr:  # "Not authorized to send Apple events"
+            _ask_again_after[app_name] = time.monotonic() + AUTOMATION_RETRY_SECONDS
+            if app_name not in _hint_shown:
+                _hint_shown.add(app_name)
+                print(f"💡 macOS didn't let Aura read which website {app_name} is on, so it guesses from window titles.")
+                print(f"   To fix: System Settings → Privacy & Security → Automation → turn on {app_name}")
+                print("   under your terminal app (for example Terminal). Aura notices on its own within a few minutes.")
+        return None
+
+    lines = result.stdout.splitlines()
+    if not lines:
+        return None
+    if len(lines) > 1 and lines[1].strip().lower() == "incognito":
+        return None
+    return lines[0].strip() or None
+
+
+def get_domain(app_name):
+    address = read_tab_address(app_name)
+    return domain_from_address(address) if address else None
+
+
 # --- sampling ---------------------------------------------------------------------------
 
 def get_window():
@@ -170,6 +259,9 @@ def get_window():
 def start_sensor(device_key):
     """Sample the active window forever. Returns an exit code (never raises on a revoked key)."""
     print(f"\n🛡️ Aura Sensor Active on {platform.system()}...")
+    if platform.system() == "Darwin":
+        print("ℹ️  Aura reads only the website's name from your browser (like linkedin.com, never the full address).")
+        print("   If macOS asks to let your terminal control the browser, click OK. Private windows are skipped.")
     last_app = None
 
     try:
@@ -180,6 +272,9 @@ def start_sensor(device_key):
                 "window_title": current_title,
                 "timestamp": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
             }
+            domain = get_domain(current_app)
+            if domain:
+                payload["domain"] = domain
 
             try:
                 response = requests.post(

@@ -43,7 +43,7 @@ async function main() {
 
   // Native driver on purpose: no per-document casting overhead for a one-off job.
   const cursor = Activity.collection
-    .find(filter, { projection: { app_name: 1, window_title: 1 } })
+    .find(filter, { projection: { app_name: 1, window_title: 1, domain: 1 } })
     .sort({ _id: 1 });
 
   const byCategory = {};
@@ -67,7 +67,7 @@ async function main() {
       skipped += 1;
       continue;
     }
-    const { site, category } = classify(doc.app_name, doc.window_title);
+    const { site, category } = classify(doc.app_name, doc.window_title, doc.domain);
     byCategory[category] = (byCategory[category] || 0) + 1;
     ops.push({
       updateOne: { filter: { _id: doc._id }, update: { $set: { site, category } } },

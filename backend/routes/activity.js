@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const ingestAuth = require("../middleware/ingestAuth"); // device key (or legacy session token)
 const Activity = require("../models/Activity");
-const { classify } = require("../services/classify");
+const { classify, normalizeDomain } = require("../services/classify");
 const { recordSample } = require("../services/rollups");
 
 const MAX_APP_NAME = 200;
@@ -20,7 +20,7 @@ const sampleTime = (clientTimestamp) => {
 };
 
 router.post("/log-activity", ingestAuth, async (req, res) => {
-  const { app_name, window_title, timestamp } = req.body || {};
+  const { app_name, window_title, timestamp, domain: reportedDomain } = req.body || {};
 
   if (typeof app_name !== "string" || !app_name.trim()) {
     return res.status(400).json({ error: "app_name is required" });
@@ -30,7 +30,10 @@ router.post("/log-activity", ingestAuth, async (req, res) => {
     0,
     MAX_WINDOW_TITLE,
   );
-  const { site, category } = classify(appName, title);
+  // The host name of the active browser tab, sent by newer sensors (never a full address).
+  // Anything that isn't a plain host name is ignored rather than rejected: the sample is still good.
+  const domain = normalizeDomain(reportedDomain);
+  const { site, category } = classify(appName, title, domain);
   const sampledAt = sampleTime(timestamp);
 
   try {
@@ -39,6 +42,7 @@ router.post("/log-activity", ingestAuth, async (req, res) => {
       user: req.user.id,
       app_name: appName,
       window_title: title,
+      ...(domain && { domain }),
       site,
       category,
       timestamp: sampledAt,
