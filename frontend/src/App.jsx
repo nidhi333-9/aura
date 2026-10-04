@@ -360,8 +360,8 @@ function App() {
                 Privacy First
               </h3>
               <p className="text-gray-500 text-xs leading-relaxed">
-                Your telemetry data stays secure, isolated to your account, and
-                completely under your control.
+                Your data belongs to your account only. See exactly what is
+                collected, and delete it or your account any time.
               </p>
             </div>
           </div>
@@ -401,7 +401,10 @@ function App() {
       </section>
       {/* 5. FOOTER */}
       <div className="w-full text-center text-xs text-gray-400 pb-8">
-        Aura © 2026. Respecting your privacy is our priority 🔒
+        Aura © 2026 ·{" "}
+        <a href="/privacy" className="underline underline-offset-4 hover:text-gray-600">
+          Privacy
+        </a>
       </div>
     </div>
   );

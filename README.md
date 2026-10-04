@@ -119,6 +119,22 @@ use Firefox or Windows, nothing breaks: Aura falls back to guessing the site fro
 and change your mind: System Settings → Privacy & Security → Automation → turn the browser on under your terminal app.
 The host is stored with each sample so a rule change can relabel old data (`backfill-classification.js --apply --force`).
 
+## 🔒 Privacy
+
+The sensor sends the app in front, its window title, on a Mac the website's host name (never the full address), and
+the time. Before saving, the server hides login tokens and everything after `?` or `#` in an address
+(`backend/services/privacy.js`). On the dashboard, **Your data** shows what is held and can delete all tracked data or
+the whole account (`DELETE /api/account/data`, `DELETE /api/account`; both need `{"confirm":"DELETE"}`, and deleting an
+account also removes its devices so their sensors stop). The plain-language notice is the `/privacy` page
+(`frontend/src/components/Privacy.jsx`): update it whenever what is collected or kept changes.
+
+To clean titles that were saved before the cleaner existed, run once from `backend/` (dry run first):
+
+```bash
+node scripts/redact-titles.js
+node scripts/redact-titles.js --apply
+```
+
 ## 🔐 Environment Variables
 
 ### Backend

@@ -33,6 +33,7 @@ app.use("/dashboard", require("./routes/dashboard"));
 app.use("/api/live", require("./routes/live"));
 app.use("/api/history", require("./routes/history"));
 app.use("/api/devices", require("./routes/devices"));
+app.use("/api/account", require("./routes/account"));
 app.use("/api/analytics", require("./routes/analytics"));
 app.use("/api", require("./routes/activity"));
 app.use("/api", require("./routes/youtube"));

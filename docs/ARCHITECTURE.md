@@ -123,6 +123,8 @@ Two details worth knowing:
 * The raw row is saved **first**. If adding it to `daily_stats` fails, the problem is logged but the sample
   is still kept and the sensor still gets 200. A repair script can fix `daily_stats` later.
 * An older sensor that sends no website host still works. The server then guesses from the window title.
+* The window title is **cleaned of secrets** before anything else happens: tokens and everything after `?` or `#`
+  in an address are replaced with `[hidden]` (`backend/services/privacy.js`). Ordinary titles are never changed.
 
 Code: `backend/routes/activity.js`, `backend/services/classify.js`, `backend/services/rollups.js`.
 
@@ -230,7 +232,7 @@ expire (see section 10).
 
 | Caller | Proves who it is with | Can do |
 | --- | --- | --- |
-| Dashboard | Login token (JWT, 7 days) | Read its own numbers, make pairing codes, list and remove its own devices. |
+| Dashboard | Login token (JWT, 7 days) | Read its own numbers, make pairing codes, list and remove its own devices, **delete its own tracked data or its whole account** (`/api/account`, needs the word `DELETE` in the request). |
 | Sensor | Device key (`Authorization: Device ...`) | Only `POST /api/log-activity`. |
 | Not signed in | Nothing | Sign in; trade a valid one-time code for a device key. |
 | ML service | Shared secret header `X-Aura-Secret` | Called only by the backend, never by a browser. |
@@ -266,6 +268,7 @@ and embeds a Spotify playlist picked by your score in the browser.
 | Relabel old samples too | From `backend/`: `node scripts/backfill-classification.js --apply --force`, **then** `node scripts/rebuild-rollups.js --apply`. |
 | Fix or rebuild the daily summaries | `node scripts/rebuild-rollups.js --apply` (repeatable). `--disable` makes history read raw data again. |
 | Let old raw samples expire (the only thing that deletes data) | `node scripts/enable-raw-ttl.js` first as a dry run; take an Atlas snapshot before `--apply`. |
+| Hide secrets in titles that were saved before the cleaner existed | From `backend/`: `node scripts/redact-titles.js` (dry run), then `--apply`. Safe to repeat. |
 | Run the tests | `cd backend && npm test`. `cd tracker && python -m unittest test_sensor -v`. |
 
 Deploy order for changes that touch more than one part: **backend first**, then the dashboard, then the
@@ -288,9 +291,10 @@ These exist only so older installs keep working. Delete them once nothing depend
 
 Honest list, most important first:
 
-1. **Privacy.** Window titles are stored as plain text and can contain private words (mail subjects, chat
-   names). There is no "delete my data" button, no privacy notice, and nothing hides tokens that appear in
-   titles. Auto-expiry exists but is switched off.
+1. **Privacy.** Window titles are stored as plain text and can still contain private words (mail subjects, chat
+   names); only tokens and address queries are hidden. People can see what is held, delete their data or their
+   account, and read a plain-language notice (`/privacy`), but there is no data export and raw samples never
+   expire on their own (the expiry script exists but is switched off).
 2. **Free tiers.** The backend sleeps when idle (about a minute to wake) and the free database is 512 MB.
 3. **No request limits** on the backend.
 4. **Google sign-in** may be limited to listed test users if the Google Cloud project is in "Testing" mode.
