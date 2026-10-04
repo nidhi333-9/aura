@@ -1,7 +1,7 @@
 # Aura 🌟
 > Understand your productivity without saying a word.
 
-Aura is an AI-powered productivity tracker that passively monitors your computer activity and converts it into real-time insights — focus score, mood analysis, and personalized recommendations.
+Aura is a productivity tracker that quietly notes which app or website is in front of you, labels each moment Productive, Neutral or Distraction, and turns that into a live focus score and history charts, so you can see when you focus best. You stay in control: you can see what is stored and delete it, or your whole account, at any time.
 
 ## 🖥️ Preview
 
@@ -14,14 +14,14 @@ Aura is an AI-powered productivity tracker that passively monitors your computer
 
 ## ✨ Features
 
-- Real-time Focus Score based on app & browser usage  
-- Smart detection of productive platforms (LeetCode, GitHub, etc.)  
-- Focus Trend Graph for daily insights  
-- Week and Month history: daily focus, best weekday, an hour-by-weekday heatmap and time breakdown  
-- Mood Analysis (Deep Focus, Calm Flow, Low Energy)  
-- Personalized YouTube recommendations  
-- Spotify integration for mood-based playlists  
-- Cross-platform desktop sensor (Mac + Windows)
+- Live Focus Score from the apps and websites you use (the last 30 minutes)  
+- Recognises sites and apps (GitHub, LeetCode, LinkedIn, YouTube, VS Code...) and labels them with simple, readable rules  
+- Today's focus trend, by hour  
+- Week, Month and 3-month history: daily focus, best weekday, an hour-by-weekday heatmap and time breakdown  
+- A focus state from your recent score (Deep Focus, Calm Flow, Low Energy)  
+- Music to match your focus state (YouTube videos and a Spotify player)  
+- Your data, your control: see what is held, delete it or your account  
+- Desktop sensor for macOS (Apple Silicon) and Windows (early support)
 
 ## 🎨 UI/UX Highlights
 
