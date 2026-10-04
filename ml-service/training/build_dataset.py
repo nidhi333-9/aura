@@ -4,6 +4,8 @@ import pandas as pd
 from pymongo import MongoClient
 from dotenv import load_dotenv
 
+# NOTE: the labels come from the frozen, OUTDATED rules in ../core/processor.py, not from the
+# backend's current classifier (see ml-service/README.md before training anything on this).
 # lets us import classify_activity from ../core/processor.py
 sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 from core.processor import classify_activity

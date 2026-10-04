@@ -14,6 +14,10 @@ load_dotenv()
 
 MONGO_URI = os.environ.get("MONGO_URI", "mongodb://localhost:27017/aura")
 
+# OUTDATED COPY. The product no longer uses this file: the real rules live in
+# backend/services/classify.js (website domains, Windows app names, title cleaning, many more
+# sites). The rules below were frozen on 4 Oct 2026 and are kept only so the training scripts still
+# run; labels made with them will disagree with what the dashboard shows. See ml-service/README.md.
 BROWSER_APPS = ["Google Chrome", "Safari", "Firefox", "Brave", "Microsoft Edge"]
 
 DESKTOP_SITE_MAP = {
