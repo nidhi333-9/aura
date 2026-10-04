@@ -90,8 +90,10 @@ async function main() {
   console.log(
     `Range: ${sinceDay === "1970-01-01" ? "all raw samples" : `from ${sinceDay}`} up to and including today (${today})`,
   );
-  if (ttl) {
-    console.log(`Raw samples expire after ${Math.round(ttl.seconds / 86400)} days; days before ${safeDay} are rollup-only and are never touched here.`);
+  if (safeDay !== "1970-01-01") {
+    console.log(
+      `Raw samples ${ttl ? `expire after ${Math.round(ttl.seconds / 86400)} days` : "have expired"}; days before ${safeDay} are summary-only and are never touched here.`,
+    );
   }
 
   // Pass 1: completed days (these no longer change, so there is no race with live ingest).

@@ -4,8 +4,9 @@
 
 const Activity = require("../models/Activity");
 const DailyStat = require("../models/DailyStat");
+const Meta = require("../models/Meta");
 const { classify } = require("./classify");
-const { DAY_MS, utcDay, dayStartMs } = require("./rollups");
+const { DAY_MS, META_ID, utcDay, dayStartMs } = require("./rollups");
 
 const FIELD_BY_CATEGORY = { Productive: "p", Neutral: "n", Distraction: "d" };
 
@@ -125,15 +126,46 @@ const rawTtl = async () => {
   return ttl ? { name: ttl.name, seconds: ttl.expireAfterSeconds } : null;
 };
 
-// First UTC day whose raw samples are guaranteed to be complete. With no expiry that is the
-// beginning of time. With an expiry, the oldest surviving day is only partly there (the TTL
-// has already eaten its early hours), so rebuilding it from raw would silently undercount it
-// forever: start the day AFTER the cutoff instead.
+// First UTC day whose raw samples are guaranteed to be complete: the only days a rebuild may
+// recompute. The summaries are the permanent record, so a rebuild must never replace one with
+// less than it holds, which is what recomputing a day whose raw samples have expired would do.
+//
+// With no expiry that is the beginning of time. Once raw samples HAVE expired, the oldest
+// surviving day is only partly there (its early hours are gone), so it is skipped too, and every
+// day before it is summary-only.
+//
+// "Have expired" is judged from three facts, not from the rule alone, because the rule can be
+// switched off or changed (a longer period leaves a gap of already-deleted days) and the data
+// stays gone:
+//   * the expiry rule exists now, or
+//   * it was ever enabled (scripts/enable-raw-ttl.js leaves a marker in `meta`), or
+//   * summaries exist for days older than the oldest surviving raw sample.
 const firstCompleteDay = async (nowMs = Date.now()) => {
   const ttl = await rawTtl();
-  if (!ttl) return { day: "1970-01-01", ttl: null };
-  const cutoffDayStart = dayStartMs(utcDay(nowMs - ttl.seconds * 1000));
-  return { day: utcDay(cutoffDayStart + DAY_MS), ttl };
+  const [oldest] = await Activity.collection
+    .find({}, { projection: { timestamp: 1 } })
+    .sort({ timestamp: 1 })
+    .limit(1)
+    .toArray();
+
+  let day = "1970-01-01";
+  const later = (candidate) => { if (candidate > day) day = candidate; };
+
+  if (ttl) later(utcDay(dayStartMs(utcDay(nowMs - ttl.seconds * 1000)) + DAY_MS));
+
+  if (!oldest) {
+    // No raw samples at all: nothing can be recomputed, so no completed day is safe.
+    if (ttl || (await DailyStat.collection.findOne({}, { projection: { _id: 1 } }))) later(utcDay(nowMs));
+  } else {
+    const oldestDay = utcDay(new Date(oldest.timestamp).getTime());
+    const marker = await Meta.collection.findOne({ _id: META_ID }, { projection: { rawExpiryEnabledAt: 1 } });
+    const expired =
+      ttl ||
+      marker?.rawExpiryEnabledAt ||
+      (await DailyStat.collection.findOne({ day: { $lt: oldestDay } }, { projection: { _id: 1 } }));
+    if (expired) later(utcDay(dayStartMs(oldestDay) + DAY_MS));
+  }
+  return { day, ttl };
 };
 
 const startOfTodayUtc = (nowMs = Date.now()) => utcDay(nowMs);

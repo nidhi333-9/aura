@@ -9,7 +9,8 @@
 //
 // Before running it for real:
 //   * rollups must be built and verified:  node scripts/rebuild-rollups.js --apply
-//   * take a database snapshot/backup (Atlas: Backup > Take Snapshot Now)
+//   * save a backup of the whole database to this computer:  node scripts/backup.js
+//     (free Atlas clusters usually can't take snapshots; a paid tier's Backup > Take Snapshot Now also works)
 //   * if you want old window titles for ML labelling, run ml-service/training/build_dataset.py
 //     first: after this, titles older than N days no longer exist
 // MongoDB's TTL monitor deletes in the background roughly once a minute, starting right after
@@ -124,6 +125,13 @@ async function main() {
       index: { keyPattern: { timestamp: 1 }, expireAfterSeconds: seconds },
     });
   }
+  // Remember that expiry was switched on, even if the rule is later removed or changed: the rows
+  // it deleted stay deleted, and rebuild-rollups.js must never try to recompute those days.
+  await Meta.collection.updateOne(
+    { _id: META_ID },
+    { $set: { rawExpiryEnabledAt: new Date() } },
+    { upsert: true },
+  );
   console.log(`\nENABLED: raw samples older than ${days} days now expire. Deletion starts within about a minute.`);
   console.log("To stop: node scripts/enable-raw-ttl.js --disable --apply");
   process.exit(0);
