@@ -1,36 +1,22 @@
-const authMiddleware = require("./authMiddleware");
 const Device = require("../models/Device");
-const User = require("../models/User");
 const { sha256 } = require("../services/pairing");
 
 // Writing lastSeen on every 10-second sample would be a database write per sample just to
 // move a timestamp; once every 30 s is plenty for an online/offline indicator.
 const LAST_SEEN_WRITE_INTERVAL_MS = 30 * 1000;
 
-// Authentication for the sensor's POST /api/log-activity only.
-//   Authorization: Device <key>  -> a paired sensor. The key is looked up by its hash, so
-//                                    revoking a device takes effect on its very next sample.
-//   anything else                -> the old behaviour (a user session JWT), so sensors
-//                                    installed before pairing existed keep working.
-// A device key is deliberately NOT accepted by authMiddleware: it can post activity and
-// nothing else (it can't read data, list devices or mint codes).
+const OUT_OF_DATE =
+  "This sensor is out of date. Open your Aura dashboard, use 'Connect a sensor', and run the new install command.";
+
+// Authentication for the sensor's POST /api/log-activity only:  Authorization: Device <key>
+// The key is looked up by its hash, so revoking a device takes effect on its very next sample.
+// A device key is deliberately NOT accepted by authMiddleware: it can post activity and nothing
+// else (it can't read data, list devices or mint codes). A login token is not accepted here at
+// all: sensors from before pairing existed used one, and they have to be reinstalled.
 const ingestAuth = async (req, res, next) => {
   const header = req.headers.authorization || "";
   if (!header.startsWith("Device ")) {
-    // A session token stays valid for 7 days even after the account is deleted. Without this
-    // check an old-style sensor would keep writing data for a user who no longer exists, which
-    // nobody could ever delete. (Paired devices are deleted with the account, so they stop.)
-    return authMiddleware(req, res, async () => {
-      try {
-        if (!(await User.exists({ _id: req.user.id }))) {
-          return res.status(401).json({ message: "User not found" });
-        }
-      } catch (err) {
-        console.error("INGEST AUTH ERROR:", err.message);
-        return res.status(500).json({ message: "Could not verify the account" });
-      }
-      next();
-    });
+    return res.status(401).json({ message: OUT_OF_DATE });
   }
 
   const key = header.slice("Device ".length).trim();

@@ -96,8 +96,9 @@ test("each device has its own limit; two devices of one person do not share it",
   assert.deepEqual(await statuses(4, base, "/log", dev("u1", "laptop")), [200, 200, 200, 429]);
   assert.deepEqual(await statuses(3, base, "/log", dev("u1", "desktop")), [200, 200, 200], "same person, other device");
   assert.deepEqual(await statuses(3, base, "/log", dev("u2", "phone")), [200, 200, 200], "another person");
-  // an old-style sensor has no device: it is limited as its person
-  assert.deepEqual(await statuses(4, base, "/log", { "x-user": "legacy" }), [200, 200, 200, 429]);
+  // defensive only: the real route always has a device (ingestAuth refuses everything else), but if one
+  // were ever missing the person would be limited instead of nobody
+  assert.deepEqual(await statuses(4, base, "/log", { "x-user": "no-device" }), [200, 200, 200, 429]);
   close();
 });
 

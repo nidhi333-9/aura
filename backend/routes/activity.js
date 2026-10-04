@@ -1,6 +1,6 @@
 const express = require("express");
 const router = express.Router();
-const ingestAuth = require("../middleware/ingestAuth"); // device key (or legacy session token)
+const ingestAuth = require("../middleware/ingestAuth"); // device key only
 const limits = require("../middleware/limits");
 const Activity = require("../models/Activity");
 const { classify, normalizeDomain } = require("../services/classify");

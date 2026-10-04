@@ -17,7 +17,7 @@ flowchart TB
   B["Backend API<br/>Express on Render"]
   DB[("MongoDB Atlas<br/>database named aura")]
   Y["YouTube API"]
-  ML["ML service<br/>FastAPI on Render<br/>not used by the dashboard"]
+  ML["ML service<br/>FastAPI on Render<br/>nothing calls it now"]
 
   S -- "every 10 s" --> B
   F -- "asks for numbers" --> B
@@ -34,7 +34,7 @@ flowchart TB
 | Dashboard | `frontend/` | React + Vite + Tailwind + Recharts. Shows the score and the charts. | Vercel |
 | Backend | `backend/` | Express + Mongoose. The only part that **writes** to the database. | Render |
 | Database | n/a | MongoDB Atlas, database `aura`. | Atlas |
-| ML service | `ml-service/` | FastAPI + pandas. **Read only.** Today it is not on the dashboard's path; it only serves an old route and some training scripts. | Render |
+| ML service | `ml-service/` | FastAPI + pandas. **Read only.** **Nothing calls it any more**: its code stays for the training scripts in `ml-service/training/`, and its Render service can be switched off. | Render |
 
 Two rules the project follows:
 
@@ -239,7 +239,7 @@ Raw `activities` rows **expire after 30 days**: a MongoDB expiry rule, switched 
 | Dashboard | Login token (JWT, 7 days) | Read its own numbers, make pairing codes, list and remove its own devices, **delete its own tracked data or its whole account** (`/api/account`, needs the word `DELETE` in the request). |
 | Sensor | Device key (`Authorization: Device ...`) | Only `POST /api/log-activity`. |
 | Not signed in | Nothing | Sign in; trade a valid one-time code for a device key. |
-| ML service | Shared secret header `X-Aura-Secret` | Called only by the backend, never by a browser. |
+| ML service | Shared secret header `X-Aura-Secret` | Nothing calls it now (the backend stopped on 4 Oct 2026). If one day it is called again, only the backend may. |
 
 Every query is filtered by the caller's own user id. CORS only allows the Vercel site and
 `http://localhost:5173`. Secrets (`JWT_SECRET`, pairing codes, device keys) are never stored in plain text.
@@ -293,7 +293,7 @@ curl -s -H "X-Forwarded-For: 9.9.9.9" https://aura-backend-hmq3.onrender.com/api
 | Service | Host | Settings it needs |
 | --- | --- | --- |
 | Dashboard | Vercel (rebuilds when `main` changes) | `VITE_API_URL`: the backend's address. |
-| Backend | Render (redeploys when `main` changes) | `MONGO_URI`, `JWT_SECRET` (required), `ML_SHARED_SECRET`, `YOUTUBE_API_KEY`, optional `PAIR_CODE_TTL_SECONDS`, `TRUST_PROXY_HOPS` (default 3), `RATE_LIMIT_DISABLED` (`true` switches every request limit off). |
+| Backend | Render (redeploys when `main` changes) | `MONGO_URI`, `JWT_SECRET` (required), `YOUTUBE_API_KEY`, optional `PAIR_CODE_TTL_SECONDS`, `TRUST_PROXY_HOPS` (default 3), `RATE_LIMIT_DISABLED` (`true` switches every request limit off). |
 | ML service | Render | `MONGO_URI` (use a read-only user), `ML_SHARED_SECRET`. |
 | Database | MongoDB Atlas | n/a |
 | Sensor builds | GitHub Actions, on a tag like `v1.1.2` | n/a (see below) |
@@ -322,18 +322,25 @@ and embeds a Spotify playlist picked by your score in the browser.
 Deploy order for changes that touch more than one part: **backend first**, then the dashboard, then the
 sensor release. Every part is written to tolerate the one before it being old.
 
-## 11. Old pieces that are still there on purpose
+## 11. Old pieces: what was removed, and what stays
 
-These exist only so older installs keep working. Delete them once nothing depends on them.
+**Removed on 4 Oct 2026**, once the data showed nobody still depended on them (every active person had a paired
+device; nobody was sending samples with a login token):
 
-* `GET /api/analytics` and the `ML_URL` code in `backend/routes/analytics.js`: the old dashboard route that
-  asked the ML service first. The current dashboard never calls it. (`GET /api/analytics/daily-trend` in the
-  same file **is** used.)
-* `GET /dashboard`: returns the last 500 raw rows. Not used by the current dashboard.
-* Accepting a login token on `POST /api/log-activity`: for sensors installed before pairing existed.
-* The `callback` redirect in `frontend/src/utils/sensorCallback.js` (loopback only): the old sensor login.
-* `backend/cleanup.js`: a one-off script that deletes samples with an empty window title. Read it before
-  running it.
+* `GET /api/analytics` (and `ML_URL`, the `ML_SHARED_SECRET` check): the old dashboard route that asked the ML service
+  first. `GET /api/analytics/daily-trend`, in the same file, **is** used and stays.
+* `GET /dashboard`: returned the last 500 raw rows. Nothing used it.
+* Accepting a login token on `POST /api/log-activity`. Only device keys work now. A sensor from before pairing existed
+  gets a 401 saying it is out of date and how to reinstall it.
+* The `?callback=` redirect (`utils/sensorCallback.js`) that handed a login token to an old sensor. A person who
+  arrives from an old sensor now sees a short notice on the landing page instead of being redirected.
+* `backend/cleanup.js`, a one-off script that deleted samples with an empty window title.
+
+**Kept on purpose** (tiny, and they protect people):
+
+* The sensor deletes an old `~/.aura_token` file after pairing (`remove_legacy_token` in `tracker/sensor.py`).
+* The installers refuse a stale install command that carries a login token (`AURA_TOKEN`) and say what to do.
+* The `ml-service/` folder, because the training scripts use `core/processor.py`.
 
 ## 12. Known limits
 

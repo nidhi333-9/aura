@@ -12,11 +12,6 @@ if (!process.env.JWT_SECRET) {
   console.error("JWT_SECRET is not set. Refusing to start.");
   process.exit(1);
 }
-if (!process.env.ML_SHARED_SECRET) {
-  console.warn(
-    "ML_SHARED_SECRET is not set: the ML service will reject requests and analytics will use the DB fallback.",
-  );
-}
 
 const app = express();
 
@@ -35,7 +30,6 @@ app.use(express.json({ limit: "32kb" }));
 
 // Routes
 app.use("/auth", require("./routes/auth"));
-app.use("/dashboard", require("./routes/dashboard"));
 app.use("/api/live", require("./routes/live"));
 app.use("/api/history", require("./routes/history"));
 app.use("/api/devices", require("./routes/devices"));
