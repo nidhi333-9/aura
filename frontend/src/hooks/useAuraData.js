@@ -5,6 +5,7 @@ import useResource from "./useResource";
 
 const LIVE_INTERVAL_MS = 10_000;
 const TREND_INTERVAL_MS = 60_000;
+const TREND_ERROR_INTERVAL_MS = 10_000;
 
 // The server computes the state once; this only maps it to a YouTube query type.
 // No state (nothing tracked in the live window) behaves like a score of 0.
@@ -22,7 +23,8 @@ const useAuraData = ({ trendEnabled = true } = {}) => {
   const trend = useResource(
     `/api/analytics/daily-trend?tz=${encodeURIComponent(browserTimeZone())}`,
     TREND_INTERVAL_MS,
-    { enabled: trendEnabled },
+    // Retry soon after a failure (e.g. the server was still waking up) instead of waiting a minute.
+    { enabled: trendEnabled, errorIntervalMs: TREND_ERROR_INTERVAL_MS },
   );
 
   const [video, setVideo] = useState(null);

@@ -209,7 +209,11 @@ const Dashboard = () => {
                   ) : (
                     <div className="h-full flex flex-col items-center justify-center text-gray-400">
                       <div className="w-8 h-8 border-2 border-gray-200 border-t-[var(--aura-blue)] rounded-full animate-spin mb-4"></div>
-                      <p className="text-sm font-medium">Mapping patterns...</p>
+                      <p className="text-sm font-medium text-center">
+                        {trend.slow
+                          ? "Waking up the server — this can take up to a minute…"
+                          : "Mapping patterns..."}
+                      </p>
                     </div>
                   )}
                 </div>
