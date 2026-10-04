@@ -195,7 +195,7 @@ are two layers:
 
 ```mermaid
 flowchart LR
-  S["Sample"] --> R[("activities<br/>raw rows<br/>window titles included<br/>big, slow to scan")]
+  S["Sample"] --> R[("activities<br/>raw rows<br/>window titles included<br/>deleted after 30 days")]
   S --> D[("daily_stats<br/>one small document per user per day<br/>counts only, no titles<br/>kept forever")]
   R --> L["Live score, Today chart<br/>(last 30 min, today)"]
   D --> H["Week, Month, 3 months"]
@@ -229,8 +229,8 @@ Database `aura` on MongoDB Atlas. Mongoose names the collections.
 | `daily_stats` | One user on one UTC day | Counts per 15-minute slot. Unique per user and day. |
 | `meta` | Settings | One document, `rollups`: `liveSince`, `ready`, `builtAt`. |
 
-Raw `activities` rows currently **never expire**. A separate, deliberately manual script can make them
-expire (see section 10).
+Raw `activities` rows **expire after 30 days**: a MongoDB expiry rule, switched on with `scripts/enable-raw-ttl.js` on 4 Oct 2026
+(see section 10). The `daily_stats` summaries are kept forever.
 
 ## 8. Who is allowed to do what
 
@@ -340,9 +340,9 @@ These exist only so older installs keep working. Delete them once nothing depend
 Honest list, most important first:
 
 1. **Privacy.** Window titles are stored as plain text and can still contain private words (mail subjects, chat
-   names); only tokens and address queries are hidden. People can see what is held, delete their data or their
-   account, and read a plain-language notice (`/privacy`), but there is no data export and raw samples never
-   expire on their own (the expiry script exists but is switched off).
+   names) for up to 30 days; only tokens and address queries are hidden. People can see what is held, delete their
+   data or their account, and read a plain-language notice (`/privacy`), but there is no data export. The 30 is also
+   written in `frontend/src/utils/retention.js`, which the privacy page quotes: change both together.
 2. **Free tiers.** The backend sleeps when idle (about a minute to wake) and the free database is 512 MB.
 3. **Request limits are counted in the server's memory** (section 8): they reset when it restarts, which is fine for one server
    but would need a shared store if the backend ever ran as several. Re-check `TRUST_PROXY_HOPS` with `/api/network-check`
