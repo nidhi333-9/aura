@@ -106,6 +106,14 @@ Without `AURA_PAIR_CODE` it asks for a code when it starts. To point it at a loc
 
 If you remove the device in the dashboard, the sensor says so and exits; run a fresh install command to connect it again.
 
+**Which website you are on (macOS).** A window title doesn't always name the site, so for Chrome, Brave, Edge,
+Safari, Arc, Vivaldi, Opera and Chromium the sensor also asks the browser which address its front tab is on.
+Only the **host name** is sent (`linkedin.com`), never the path, query or page content, and private/incognito
+windows are skipped. The first time, macOS asks whether your terminal may control the browser; if you say no, or
+use Firefox or Windows, nothing breaks: Aura falls back to guessing the site from the window title. If you said no
+and change your mind: System Settings → Privacy & Security → Automation → turn the browser on under your terminal app.
+The host is stored with each sample so a rule change can relabel old data (`backfill-classification.js --apply --force`).
+
 ## 🔐 Environment Variables
 
 ### Backend
@@ -179,6 +187,7 @@ repairs recent drift.
 
 ```bash
 cd backend && npm test
+cd tracker && python -m unittest test_sensor -v   # needs: pip install pywinctl requests
 ```
 
 ## 👩‍💻 Author

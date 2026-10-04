@@ -5,6 +5,9 @@ const activitySchema = new mongoose.Schema({
   user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
   app_name: { type: String, required: true },
   window_title: { type: String },
+  // Host name of the active browser tab ("linkedin.com"), when the sensor could read it. Only the
+  // host: never the path or query. Kept so a rule change can relabel old rows exactly.
+  domain: { type: String },
   // Labels assigned once at ingest (services/classify.js). Rows written before this
   // existed don't have them; scripts/backfill-classification.js fills those in.
   site: { type: String },
