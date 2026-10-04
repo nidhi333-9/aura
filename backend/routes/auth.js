@@ -3,9 +3,9 @@ const router = express.Router();
 const axios = require("axios");
 const User = require("../models/User");
 const jwt = require("jsonwebtoken");
-const authMiddleware = require("../middleware/authMiddleware");
+const limits = require("../middleware/limits");
 
-router.post("/google", async (req, res) => {
+router.post("/google", limits.login, limits.loginFails, async (req, res) => {
   try {
     const { token } = req.body;
 
@@ -49,7 +49,7 @@ router.post("/google", async (req, res) => {
 // Lightweight token check for the sensor and landing page: 200 if the token is
 // valid and the user still exists, 401 otherwise. Replaces using GET /dashboard
 // (which returns up to 500 activity rows) just to validate a token.
-router.get("/me", authMiddleware, async (req, res) => {
+router.get("/me", limits.authed, async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
     if (!user) return res.status(401).json({ message: "User not found" });

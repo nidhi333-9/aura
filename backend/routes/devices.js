@@ -1,6 +1,6 @@
 const router = require("express").Router();
 const mongoose = require("mongoose");
-const authMiddleware = require("../middleware/authMiddleware");
+const limits = require("../middleware/limits");
 const Device = require("../models/Device");
 const PairingCode = require("../models/PairingCode");
 const User = require("../models/User");
@@ -24,7 +24,7 @@ const INVALID_CODE = "That pairing code is invalid or has expired. Generate a ne
 
 // Mint a code for the logged-in user. One live code per user: asking for a new one
 // invalidates the previous one.
-router.post("/pair-code", authMiddleware, async (req, res) => {
+router.post("/pair-code", limits.authed, async (req, res) => {
   try {
     if (!(await User.exists({ _id: req.user.id }))) {
       return res.status(401).json({ message: "User not found" });
@@ -55,7 +55,7 @@ router.post("/pair-code", authMiddleware, async (req, res) => {
   }
 });
 
-router.get("/", authMiddleware, async (req, res) => {
+router.get("/", limits.authed, async (req, res) => {
   try {
     const now = Date.now();
     const devices = await Device.find({ user: req.user.id, revokedAt: null })
@@ -78,7 +78,7 @@ router.get("/", authMiddleware, async (req, res) => {
 });
 
 // Revoke: the device's key stops working on its next request. Idempotent.
-router.delete("/:id", authMiddleware, async (req, res) => {
+router.delete("/:id", limits.authed, async (req, res) => {
   try {
     if (!mongoose.isValidObjectId(req.params.id)) {
       return res.status(404).json({ error: "Device not found" });
@@ -97,7 +97,7 @@ router.delete("/:id", authMiddleware, async (req, res) => {
 
 // --- sensor (no session: the one-time code is the credential) --------------------------
 
-router.post("/pair", async (req, res) => {
+router.post("/pair", limits.pair, limits.pairFails, async (req, res) => {
   const raw = normalizeCode(req.body?.code);
   if (!isWellFormedCode(raw)) {
     return res.status(400).json({ error: INVALID_CODE });

@@ -1,9 +1,9 @@
-const authMiddleware = require("../middleware/authMiddleware");
+const limits = require("../middleware/limits");
 const Activity = require("../models/Activity");
 
 const router = require("express").Router();
 
-router.get("/", authMiddleware, async (req, res) => {
+router.get("/", limits.authed, async (req, res) => {
   try {
     const logs = await Activity.find({ user: req.user.id })
       .sort({ timestamp: -1 })

@@ -1,6 +1,6 @@
 const router = require("express").Router();
 const mongoose = require("mongoose");
-const authMiddleware = require("../middleware/authMiddleware");
+const limits = require("../middleware/limits");
 const Activity = require("../models/Activity");
 const { buildHistory, windowDates } = require("../services/history");
 const { docsForRange, groupsFromDocs, rollupsReady } = require("../services/rollups");
@@ -48,7 +48,7 @@ const groupsFromRollups = async (userId, from, to, tz) =>
 // The period AND the one before it are read in one go (for "vs last period"). Data comes from the
 // rollups once scripts/rebuild-rollups.js has verified them (Meta "rollups".ready), and from the
 // raw samples until then, so nothing changes, and nothing breaks, before that script has run.
-router.get("/", authMiddleware, async (req, res) => {
+router.get("/", limits.authed, async (req, res) => {
   const range = req.query.range === undefined ? "7d" : req.query.range;
   if (typeof range !== "string" || !Object.hasOwn(RANGES, range)) {
     return res.status(400).json({ error: "range must be 7d, 30d or 90d" });

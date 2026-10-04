@@ -1,6 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const connectDB = require("./config/db");
+const { trustProxyHops } = require("./middleware/limits");
 
 // .env.local (local overrides) > .env; real environment variables beat both. See config/env.js.
 const { loaded } = require("./config/env")();
@@ -19,13 +20,18 @@ if (!process.env.ML_SHARED_SECRET) {
 
 const app = express();
 
+// Behind Render's proxy every request arrives from the proxy, so Express must be told how many
+// proxies to believe when it works out the caller's address (used by the request limits).
+app.set("trust proxy", trustProxyHops());
+
 app.use(
   cors({
     origin: ["https://aura-gamma-eight.vercel.app", "http://localhost:5173"],
     credentials: true,
   }),
 );
-app.use(express.json());
+// The biggest legitimate body (a sample, a pairing request, a login) is a few kilobytes.
+app.use(express.json({ limit: "32kb" }));
 
 // Routes
 app.use("/auth", require("./routes/auth"));
@@ -37,6 +43,7 @@ app.use("/api/account", require("./routes/account"));
 app.use("/api/analytics", require("./routes/analytics"));
 app.use("/api", require("./routes/activity"));
 app.use("/api", require("./routes/youtube"));
+app.use("/api", require("./routes/network"));
 
 app.get("/", (req, res) => {
   res.send("Aura Backend is running...");
