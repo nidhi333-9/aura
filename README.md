@@ -143,7 +143,7 @@ JWT_SECRET= (required — the server refuses to start without it)
 ML_SHARED_SECRET= (must match the ML service's value; without it analytics falls back to the DB)  
 YOUTUBE_API_KEY=  
 PAIR_CODE_TTL_SECONDS= (optional, default 600: how long a sensor pairing code stays valid)  
-TRUST_PROXY_HOPS= (optional, default 1: how many proxies sit in front of the backend; check with `GET /api/network-check`, see docs/ARCHITECTURE.md)  
+TRUST_PROXY_HOPS= (optional, default 3, measured for Render: how many proxies Express believes when it works out a caller's address; check with `GET /api/network-check`, see docs/ARCHITECTURE.md)  
 RATE_LIMIT_DISABLED= (optional: `true` switches every request limit off)  
 
 ### ML Service

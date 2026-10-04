@@ -1,14 +1,16 @@
 const router = require("express").Router();
 const limits = require("../middleware/limits");
 
-// Shows the caller the address the server believes they have, and the raw header it came from.
-// It is how the right TRUST_PROXY_HOPS is checked against the real host (see the README): call it
-// with a made-up X-Forwarded-For and confirm the made-up value does NOT come back as `ip`.
-// It reveals nothing but the caller's own connection details.
+// Tells the caller which address the server believes they have. It is how TRUST_PROXY_HOPS is
+// checked against the real host: `ip` must be the caller's own public address, and an
+// X-Forwarded-For the caller invents must never come back as `ip`.
+// It shows only that, how many addresses the header held, and the setting in force. The header
+// itself is not echoed: it contains the host's internal addresses, which nobody needs.
 router.get("/network-check", limits.diagnostic, (req, res) => {
+  const header = req.headers["x-forwarded-for"];
   res.json({
     ip: req.ip,
-    forwarded_for: req.headers["x-forwarded-for"] || null,
+    forwarded_for_entries: header ? String(header).split(",").length : 0,
     trusted_proxy_hops: req.app.get("trust proxy"),
   });
 });
