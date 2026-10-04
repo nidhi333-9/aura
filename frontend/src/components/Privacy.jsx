@@ -1,3 +1,5 @@
+import { RAW_SAMPLE_DAYS } from "../utils/retention";
+
 // The privacy notice, in plain words. If the sensor or the server starts collecting or keeping
 // something different, change this page in the same commit.
 
@@ -77,8 +79,12 @@ const Privacy = () => (
 
       <Section title="How long it is kept">
         <p>
-          Samples (with their window titles) and the daily summaries are kept until you delete them. There is no
-          automatic deletion yet.
+          Samples, with their window titles, are deleted automatically after {RAW_SAMPLE_DAYS} days.
+        </p>
+        <p>
+          The daily summaries behind the Week, Month and 3-month charts are kept until you delete them. They hold only
+          counts, for each day, of time that was Productive, Neutral or a Distraction. They contain no titles, apps or
+          websites.
         </p>
       </Section>
 

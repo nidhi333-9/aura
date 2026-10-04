@@ -125,7 +125,9 @@ The sensor sends the app in front, its window title, on a Mac the website's host
 the time. Before saving, the server hides login tokens and everything after `?` or `#` in an address
 (`backend/services/privacy.js`). On the dashboard, **Your data** shows what is held and can delete all tracked data or
 the whole account (`DELETE /api/account/data`, `DELETE /api/account`; both need `{"confirm":"DELETE"}`, and deleting an
-account also removes its devices so their sensors stop). The plain-language notice is the `/privacy` page
+account also removes its devices so their sensors stop). Samples (which hold the window titles) are deleted by the
+database after 30 days (`scripts/enable-raw-ttl.js`); the daily summaries behind the history charts hold only counts and
+are kept. The plain-language notice is the `/privacy` page
 (`frontend/src/components/Privacy.jsx`): update it whenever what is collected or kept changes.
 
 To clean titles that were saved before the cleaner existed, run once from `backend/` (dry run first):

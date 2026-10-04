@@ -3,14 +3,12 @@ import { useNavigate } from "react-router-dom";
 import { Trash2 } from "lucide-react";
 import { api } from "../api/client";
 import useResource from "../hooks/useResource";
+import { RAW_SAMPLE_DAYS } from "../utils/retention";
 
 // "Your data": what Aura holds about you, and two ways to remove it. Deleting always takes a
 // second, deliberate step, and the server insists on it too (it wants the word DELETE).
 const CONFIRM_WORD = "DELETE";
 const SUMMARY_REFRESH_MS = 5 * 60 * 1000;
-
-const formatDate = (iso) =>
-  new Date(iso).toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" });
 
 const DataControls = () => {
   const navigate = useNavigate();
@@ -80,12 +78,14 @@ const DataControls = () => {
             </>
           ) : !held ? (
             "Checking what Aura holds…"
-          ) : held.samples === 0 ? (
+          ) : held.samples === 0 && held.days_summarised === 0 ? (
             "Aura holds no tracked activity for you right now."
           ) : (
             <>
-              Aura holds <b>{held.samples.toLocaleString()}</b> tracked samples
-              {held.first_sample ? ` since ${formatDate(held.first_sample)}` : ""}, including the window titles.
+              Aura holds <b>{held.samples.toLocaleString()}</b> tracked samples, including the window titles (samples
+              older than {RAW_SAMPLE_DAYS} days are deleted automatically), and daily summaries for{" "}
+              <b>{held.days_summarised.toLocaleString()}</b> {held.days_summarised === 1 ? "day" : "days"} (counts only,
+              no titles).
             </>
           )}{" "}
           <a href="/privacy" target="_blank" rel="noreferrer" className="underline underline-offset-4 font-bold hover:opacity-80">
