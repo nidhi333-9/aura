@@ -166,6 +166,24 @@ VITE_API_URL=
 How the pieces connect, who may call what, and the everyday jobs (releasing a sensor, rebuilding summaries) are in
 [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
+### Deploying
+
+* **Website (Vercel)** deploys by itself when `main` changes.
+* **Backend (Render)** is deployed by GitHub, not by Render's own watcher. After the backend tests pass on a push to
+  `main`, the `deploy` job in `.github/workflows/ci.yml` calls Render's deploy hook for **that exact commit**, then waits
+  until the live `GET /api/version` shows it. A deploy that never goes live turns the run red instead of passing quietly.
+
+One-time setup (the hook URL is private: paste it only into GitHub's secret box, never into a chat or a file):
+
+1. Render, the `aura-backend` service, **Settings → Deploy → Deploy Hook**: show it and copy the URL.
+2. GitHub, this repository, **Settings → Secrets and variables → Actions → New repository secret**:
+   name `RENDER_DEPLOY_HOOK`, value the URL.
+3. Render, **Settings → Deploy → Auto-Deploy**: set it to **Off**, so one push is not deployed twice.
+
+If the secret is missing, the run shows a yellow warning and deploys nothing. To check by hand whether the live backend is
+current: `cd backend && node scripts/check-deploy.js`. A manual deploy always works too (Render: **Manual Deploy → Deploy
+latest commit**). If the hook URL ever leaks, press **Regenerate hook** in Render and update the GitHub secret.
+
 ### After deploying the classify-at-ingest change
 
 New activity is labelled (`site`, `category`) when it arrives. To label rows recorded before that, run once
