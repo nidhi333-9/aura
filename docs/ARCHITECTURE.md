@@ -310,7 +310,8 @@ and embeds a Spotify playlist picked by your score in the browser.
 | I want to... | Do this |
 | --- | --- |
 | Ship a code change | Push to `main`. Vercel and Render redeploy by themselves. |
-| Ship a new sensor | `git tag v1.2.3` then `git push origin v1.2.3`. GitHub Actions builds the sensor and attaches it to a release. The installers always download the **latest** release. |
+| Ship a new sensor | First try the build without publishing anything: GitHub, **Actions**, **Build Sensor**, **Run workflow** (the built files appear as downloads on the run page for 7 days). Then `git tag v1.2.3` and `git push origin v1.2.3`: GitHub Actions builds the sensor for Apple Silicon, Intel and Windows, checks that each Mac build starts, and attaches them to a release. The installers always download the **latest** release. |
+| Is the live backend up to date? | `cd backend && node scripts/check-deploy.js`. It compares the commit the live backend runs (`GET /api/version`) with the newest commit on GitHub: UP TO DATE, BEHIND, or UNKNOWN (an older backend that has no version page). Render deploys only after the CI checks pass, so BEHIND for a few minutes after a push is normal. |
 | Update my own sensor | Stop it, run the install command again (no code needed, the saved key is reused). |
 | Change how sites are labelled | Edit `backend/services/classify.js`, add a test in `backend/test/classify.test.js`, push. New samples use it at once. |
 | Relabel old samples too | From `backend/`: `node scripts/backfill-classification.js --apply --force`, **then** `node scripts/rebuild-rollups.js --apply`. |
@@ -356,9 +357,12 @@ Honest list, most important first:
    but would need a shared store if the backend ever ran as several. Re-check `TRUST_PROXY_HOPS` with `/api/network-check`
    after any change of host (the default, 3, was measured on Render).
 4. **Google sign-in** may be limited to listed test users if the Google Cloud project is in "Testing" mode.
-5. **Platforms.** The installers expect an Apple Silicon Mac or Windows. There is no Intel Mac build, the
-   Windows installer has never been run by the author, the Windows program is unsigned, and Windows does not
-   get website names (it guesses from titles).
+5. **Platforms.** The installers expect an Apple Silicon Mac or Windows. The Intel Mac build is set up (runner
+   `macos-15-intel`) but has not yet been published or tested on a real Intel Mac: until a release contains it,
+   an Intel Mac gets a clear "not available yet" message. The Windows installer has never been run by the
+   author, the Windows program is unsigned, and Windows does not get website names (it guesses from titles).
+   GitHub retires old macOS runner images (`macos-13` is gone, `macos-14` ends on 2 Nov 2026), so the runner
+   names in `.github/workflows/` need a look about once a year (the list is at github.com/actions/runner-images).
 6. **Titles that name no site** (for example a ChatGPT chat called "Fix Port Conflict") can only be
    recognised with the website host, which only the Mac sensor sends.
 7. **The ML classifier was never built.** It would need labelled examples, and the website host removes most

@@ -38,6 +38,7 @@ app.use("/api/analytics", require("./routes/analytics"));
 app.use("/api", require("./routes/activity"));
 app.use("/api", require("./routes/youtube"));
 app.use("/api", require("./routes/network"));
+app.use("/api", require("./routes/version"));
 
 app.get("/", (req, res) => {
   res.send("Aura Backend is running...");

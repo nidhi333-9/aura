@@ -38,8 +38,24 @@ URL="https://github.com/$REPO/releases/latest/download/$ASSET"
 
 mkdir -p "$INSTALL_DIR"
 echo "Downloading Aura Sensor ($ASSET)..."
-curl -fsSL "$URL" -o "$DEST"
-chmod +x "$DEST"
+# Into a temporary file first: if the download fails halfway, a sensor that is already installed
+# keeps working instead of being replaced by half a file.
+PART="$DEST.download"
+if ! curl -fsSL "$URL" -o "$PART"; then
+  rm -f "$PART"
+  echo
+  echo "Could not download the sensor from:"
+  echo "  $URL"
+  if [ "$ASSET" = "aura-sensor-mac-intel" ]; then
+    echo "This Mac has an Intel chip, and an Intel version is not part of every release yet."
+    echo "See whether one exists at https://github.com/$REPO/releases/latest"
+  else
+    echo "Check your internet connection and run the command again."
+  fi
+  exit 1
+fi
+chmod +x "$PART"
+mv -f "$PART" "$DEST"
 
 echo "Installed to $DEST"
 echo "Starting Aura Sensor..."

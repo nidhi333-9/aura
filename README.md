@@ -23,7 +23,7 @@ Aura is a productivity tracker that quietly notes which app or website is in fro
 - A focus state from your recent score (Deep Focus, Calm Flow, Low Energy)  
 - Music to match your focus state (YouTube videos and a Spotify player)  
 - Your data, your control: see what is held, delete it or your account  
-- Desktop sensor for macOS (Apple Silicon) and Windows (early support)
+- Desktop sensor for macOS (Apple Silicon; an Intel build is set up but not yet published) and Windows (early support)
 
 ## 🎨 UI/UX Highlights
 

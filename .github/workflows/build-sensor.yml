@@ -1,16 +1,26 @@
 name: Build Sensor
 
+# A tag like v1.2.3 builds the sensor for every platform and publishes it as a GitHub release (the
+# installers always download the latest release).
+#
+# "Run workflow" on the Actions tab builds everything the same way but publishes NOTHING: the files
+# are kept as a download for 7 days. Use it to try a change to this file or to the sensor before
+# making a tag.
 on:
   push:
     tags:
       - 'v*'
+  workflow_dispatch:
 
 permissions:
   contents: write
 
+# Runner names: GitHub retires old macOS images (macos-13 is gone, macos-14 ends on 2 Nov 2026), so
+# these point at macOS 15, in its Apple Silicon and its Intel flavour. Check the current list at
+# https://github.com/actions/runner-images before the next retirement.
 jobs:
   build-mac-arm64:
-    runs-on: macos-14
+    runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -24,13 +34,31 @@ jobs:
         run: |
           cd tracker
           pyinstaller --onefile --name "aura-sensor-mac-arm64" sensor.py
+      - name: Smoke test (the program starts and says it is not paired yet)
+        run: |
+          cd tracker
+          # An empty home folder, so it can find no saved key; no keyboard, so it cannot ask for a code.
+          set +e
+          out="$(HOME="$(mktemp -d)" ./dist/aura-sensor-mac-arm64 </dev/null 2>&1)"
+          code=$?
+          echo "$out"
+          echo "exit code: $code (2 means 'not paired yet')"
+          test "$code" -eq 2 && echo "$out" | grep -q "isn't paired"
+      - name: Keep the build as a download (test runs only)
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v4
+        with:
+          name: aura-sensor-mac-arm64
+          path: tracker/dist/aura-sensor-mac-arm64
+          retention-days: 7
       - name: Upload to Release
+        if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v1
         with:
           files: tracker/dist/aura-sensor-mac-arm64
 
   build-mac-intel:
-    runs-on: macos-13
+    runs-on: macos-15-intel
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -44,7 +72,24 @@ jobs:
         run: |
           cd tracker
           pyinstaller --onefile --name "aura-sensor-mac-intel" sensor.py
+      - name: Smoke test (the program starts and says it is not paired yet)
+        run: |
+          cd tracker
+          set +e
+          out="$(HOME="$(mktemp -d)" ./dist/aura-sensor-mac-intel </dev/null 2>&1)"
+          code=$?
+          echo "$out"
+          echo "exit code: $code (2 means 'not paired yet')"
+          test "$code" -eq 2 && echo "$out" | grep -q "isn't paired"
+      - name: Keep the build as a download (test runs only)
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v4
+        with:
+          name: aura-sensor-mac-intel
+          path: tracker/dist/aura-sensor-mac-intel
+          retention-days: 7
       - name: Upload to Release
+        if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v1
         with:
           files: tracker/dist/aura-sensor-mac-intel
@@ -68,7 +113,15 @@ jobs:
         run: |
           cd tracker/dist
           powershell Compress-Archive -Path aura-sensor-windows -DestinationPath aura-sensor-windows.zip
+      - name: Keep the build as a download (test runs only)
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v4
+        with:
+          name: aura-sensor-windows
+          path: tracker/dist/aura-sensor-windows.zip
+          retention-days: 7
       - name: Upload to Release
+        if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v1
         with:
           files: tracker/dist/aura-sensor-windows.zip
