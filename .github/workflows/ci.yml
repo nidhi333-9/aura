@@ -53,8 +53,8 @@ jobs:
   sensor:
     name: Sensor tests (macOS)
     # macOS because the sensor's window library only starts on a real desktop OS, and the sensor is
-    # built on macOS-14 too.
-    runs-on: macos-14
+    # built on macOS too. (macos-14 is being retired by GitHub, ending 2 Nov 2026.)
+    runs-on: macos-15
     defaults:
       run:
         working-directory: tracker
