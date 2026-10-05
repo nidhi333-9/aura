@@ -236,7 +236,7 @@ Raw `activities` rows **expire after 30 days**: a MongoDB expiry rule, switched 
 
 | Caller | Proves who it is with | Can do |
 | --- | --- | --- |
-| Dashboard | Login token (JWT, 7 days) | Read its own numbers, make pairing codes, list and remove its own devices, **delete its own tracked data or its whole account** (`/api/account`, needs the word `DELETE` in the request). |
+| Dashboard | Login token (JWT, 7 days) | Read its own numbers, make pairing codes, list and remove its own devices, **download a copy of its own data** (`GET /api/account/export`), **delete its own tracked data or its whole account** (`/api/account`, needs the word `DELETE` in the request). |
 | Sensor | Device key (`Authorization: Device ...`) | Only `POST /api/log-activity`. |
 | Not signed in | Nothing | Sign in; trade a valid one-time code for a device key. |
 | ML service | Shared secret header `X-Aura-Secret` | Nothing calls it now (the backend stopped on 4 Oct 2026). If one day it is called again, only the backend may. |
@@ -256,6 +256,7 @@ dashboard treat that as "try again soon", never as "you were removed".
 | Sensor samples (`POST /api/log-activity`) | 30 a minute | device |
 | Dashboard requests (every signed-in route) | 300 a minute | person |
 | Deleting data or an account | 10 an hour | person |
+| Downloading all one's data (`GET /api/account/export`) | 6 an hour | person |
 | Google sign-in (`POST /auth/google`) | 60 a minute, and 20 rejected ones a minute | network address |
 | Pairing (`POST /api/devices/pair`) | 30 a minute, and 10 wrong codes a minute | network address |
 | Wrong device keys on ingest | 30 a minute | network address |

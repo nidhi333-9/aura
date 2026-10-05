@@ -1,10 +1,13 @@
 const router = require("express").Router();
+const { Readable } = require("node:stream");
+const { pipeline } = require("node:stream/promises");
 const limits = require("../middleware/limits");
 const Activity = require("../models/Activity");
 const DailyStat = require("../models/DailyStat");
 const Device = require("../models/Device");
 const PairingCode = require("../models/PairingCode");
 const User = require("../models/User");
+const { exportPieces, DB_BATCH } = require("../services/exportData");
 
 // A person's control over their own data. Every query here is filtered by the caller's own user
 // id (from their login token), so nobody can read or delete anyone else's.
@@ -36,6 +39,55 @@ router.get("/summary", limits.authed, async (req, res) => {
   } catch (err) {
     console.error("ACCOUNT SUMMARY ERROR:", err.message);
     res.status(500).json({ error: "Could not load your data summary" });
+  }
+});
+
+// A copy of everything Aura holds about the caller, as one downloadable JSON file (see
+// services/exportData.js for what is in it). The rows are streamed, so a big account does not fill
+// the server's memory, and a download that is cancelled stops the database reads.
+router.get("/export", limits.authedExport, async (req, res) => {
+  const user = req.user.id;
+  let pieces;
+  let first;
+  try {
+    const [profile, devices] = await Promise.all([
+      User.findById(user).lean(),
+      Device.find({ user }).sort({ createdAt: 1 }).lean(),
+    ]);
+    // A login token outlives the account it was made for (up to 7 days), so say so plainly.
+    if (!profile) return res.status(404).json({ error: "This account no longer exists." });
+    pieces = exportPieces({
+      profile,
+      devices,
+      days: DailyStat.find({ user }).sort({ day: 1 }).lean().batchSize(DB_BATCH).cursor(),
+      samples: Activity.find({ user }).sort({ timestamp: 1 }).lean().batchSize(DB_BATCH).cursor(),
+    });
+    // Wait for the first piece: if the database is down, this is where it shows, and the person gets
+    // a normal error message instead of a download that dies after it started.
+    first = await pieces.next();
+  } catch (err) {
+    if (pieces) await pieces.return().catch(() => {});
+    console.error("ACCOUNT EXPORT ERROR:", err.message);
+    return res.status(500).json({ error: "Could not prepare your download. Please try again." });
+  }
+
+  const body = (async function* () {
+    if (!first.done) yield first.value;
+    yield* pieces;
+  })();
+  res.set({
+    "Content-Type": "application/json; charset=utf-8",
+    "Content-Disposition": `attachment; filename="aura-data-${new Date().toISOString().slice(0, 10)}.json"`,
+    // Personal data: no shared cache or browser history entry should keep a copy.
+    "Cache-Control": "no-store",
+    "X-Content-Type-Options": "nosniff",
+  });
+  try {
+    await pipeline(Readable.from(body, { objectMode: false }), res);
+  } catch (err) {
+    // Headers are already sent. pipeline has closed the connection, so the person's download fails
+    // visibly instead of ending as a file that looks complete but stops half way.
+    console.error("ACCOUNT EXPORT STOPPED:", err.code || err.message);
   }
 });
 

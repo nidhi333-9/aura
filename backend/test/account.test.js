@@ -68,7 +68,7 @@ const names = () => calls.map((c) => c.name);
 
 test("everything needs a login", async () => {
   install();
-  for (const [method, path] of [["GET", "/summary"], ["DELETE", "/data"], ["DELETE", ""]]) {
+  for (const [method, path] of [["GET", "/summary"], ["GET", "/export"], ["DELETE", "/data"], ["DELETE", ""]]) {
     const res = await call(method, path, { auth: null, body: { confirm: "DELETE" } });
     assert.equal(res.status, 401, `${method} ${path}`);
   }
