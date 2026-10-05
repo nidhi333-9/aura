@@ -31,3 +31,6 @@ venv/
 *.sw?
 # Personal data used for ML labelling (your real window titles). Never commit these.
 ml-service/training/*.csv
+
+# PyInstaller build leftovers
+build/
