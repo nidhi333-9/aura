@@ -27,7 +27,7 @@ const Privacy = () => (
       <h1 className="text-4xl font-extrabold text-[var(--aura-dark)] tracking-tight mt-6">Privacy</h1>
       <p className="text-slate-500 font-medium mt-3">
         Aura is a student project, not a company. This page says in plain words what it collects, where it goes
-        and how you can remove it. Last updated 4 October 2026.
+        and how you can remove it. Last updated 5 October 2026.
       </p>
 
       <Section title="What the sensor collects">
@@ -91,7 +91,8 @@ const Privacy = () => (
       <Section title="Your controls">
         <List
           items={[
-            "On the dashboard, “Your data” shows what Aura holds and lets you delete all your tracked data, or your whole account.",
+            "On the dashboard, “Your data” shows what Aura holds, lets you download a copy of it, and lets you delete all your tracked data, or your whole account.",
+            "The download is one file with your profile, your devices (never their secret keys), your daily summaries and every sample Aura still holds, window titles included. Keep it private.",
             "Deleting your account also removes your paired devices, and their sensors stop by themselves.",
             "“Your devices” lets you remove one sensor at any time.",
             "You can stop the sensor whenever you like (press Ctrl+C in its window). To remove it completely, delete the .aura folder in your home folder.",

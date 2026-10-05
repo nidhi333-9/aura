@@ -1,14 +1,18 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Trash2 } from "lucide-react";
+import { Download, Trash2 } from "lucide-react";
 import { api } from "../api/client";
 import useResource from "../hooks/useResource";
 import { RAW_SAMPLE_DAYS } from "../utils/retention";
+import { errorMessageOf, localDateStamp, readableSize, saveBlob } from "../utils/download";
 
-// "Your data": what Aura holds about you, and two ways to remove it. Deleting always takes a
-// second, deliberate step, and the server insists on it too (it wants the word DELETE).
+// "Your data": what Aura holds about you, a way to download a copy, and two ways to remove it.
+// Deleting always takes a second, deliberate step, and the server insists on it too (it wants the
+// word DELETE).
 const CONFIRM_WORD = "DELETE";
 const SUMMARY_REFRESH_MS = 5 * 60 * 1000;
+// A sleeping free-tier server can take a minute to wake, and a big file takes a while to arrive.
+const DOWNLOAD_TIMEOUT_MS = 5 * 60 * 1000;
 
 const DataControls = () => {
   const navigate = useNavigate();
@@ -18,6 +22,8 @@ const DataControls = () => {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState(null);
   const [done, setDone] = useState(null);
+  const [downloading, setDownloading] = useState(false);
+  const [saved, setSaved] = useState(null);
 
   const held = summary.data;
 
@@ -44,6 +50,27 @@ const DataControls = () => {
       return false;
     } finally {
       setBusy(false);
+    }
+  };
+
+  const download = async () => {
+    setDownloading(true);
+    setError(null);
+    setSaved(null);
+    try {
+      const res = await api.get("/api/account/export", { responseType: "blob", timeout: DOWNLOAD_TIMEOUT_MS });
+      const name = `aura-data-${localDateStamp()}.json`;
+      saveBlob(res.data, name);
+      setSaved(`Saved ${name} (${readableSize(res.data.size)}). It includes your window titles, so keep it private.`);
+    } catch (err) {
+      if (err.response?.status === 401) {
+        localStorage.removeItem("token");
+        navigate("/", { replace: true });
+        return;
+      }
+      setError(await errorMessageOf(err, "Could not download your data. Please check your connection and try again."));
+    } finally {
+      setDownloading(false);
     }
   };
 
@@ -100,6 +127,12 @@ const DataControls = () => {
           </p>
         )}
 
+        {saved && (
+          <p role="status" className="mt-5 text-sm font-semibold text-emerald-700">
+            {saved}
+          </p>
+        )}
+
         {error && (
           <p role="alert" className="mt-5 text-sm font-semibold text-red-600">
             {error}
@@ -108,6 +141,16 @@ const DataControls = () => {
 
         {!done && step === null && (
           <div className="flex flex-wrap gap-3 mt-6">
+            <button
+              type="button"
+              onClick={download}
+              disabled={downloading || busy}
+              aria-busy={downloading}
+              className="flex items-center gap-2 text-sm font-bold px-5 py-3 rounded-2xl bg-[var(--aura-dark)] text-white hover:opacity-90 disabled:opacity-60 disabled:cursor-wait transition-opacity"
+            >
+              <Download size={15} />
+              {downloading ? "Preparing your file…" : "Download my data"}
+            </button>
             <button
               type="button"
               onClick={() => setStep("data")}

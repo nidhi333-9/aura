@@ -28,6 +28,7 @@ const DEFAULTS = {
   ingest: { windowMs: MINUTE, limit: 30 }, //          samples, per device
   dashboard: { windowMs: MINUTE, limit: 300 }, //      dashboard requests, per person
   destructive: { windowMs: HOUR, limit: 10 }, //       deleting data or an account, per person
+  exportData: { windowMs: HOUR, limit: 6 }, //         downloading all one's data (a big read), per person
   login: { windowMs: MINUTE, limit: 60 }, //           Google sign-ins, per address
   loginFails: { windowMs: MINUTE, limit: 20 }, //      rejected sign-ins, per address
   pair: { windowMs: MINUTE, limit: 30 }, //            pairing attempts, per address
@@ -43,13 +44,19 @@ const byDevice = (req) =>
 
 const failedWith = (...codes) => (req, res) => !codes.includes(res.statusCode);
 
+// "45 seconds", "1 second", or, from two minutes on, "about 60 minutes" (hourly limits).
+const waitPhrase = (seconds) => {
+  if (seconds >= 120) return `about ${Math.ceil(seconds / 60)} minutes`;
+  return `${seconds} second${seconds === 1 ? "" : "s"}`;
+};
+
 const tooMany = (what) => (req, res, next, options) => {
   const resetMs = req.rateLimit?.resetTime
     ? req.rateLimit.resetTime.getTime() - Date.now()
     : options.windowMs;
   const retryAfter = Math.max(1, Math.ceil(resetMs / 1000));
   res.status(options.statusCode).json({
-    error: `Too many ${what}. Please wait ${retryAfter} second${retryAfter === 1 ? "" : "s"} and try again.`,
+    error: `Too many ${what}. Please wait ${waitPhrase(retryAfter)} and try again.`,
     retry_after: retryAfter,
   });
 };
@@ -73,6 +80,7 @@ const createLimiters = (overrides = {}) => {
     ingest: make("samples", cfg("ingest"), { keyGenerator: byDevice }),
     dashboard: make("requests", cfg("dashboard"), { keyGenerator: byPerson }),
     destructive: make("delete requests", cfg("destructive"), { keyGenerator: byPerson }),
+    exportData: make("data downloads", cfg("exportData"), { keyGenerator: byPerson }),
     login: make("sign-in attempts", cfg("login"), { keyGenerator: byAddress }),
     loginFails: make("failed sign-ins", cfg("loginFails"), {
       keyGenerator: byAddress,
@@ -96,6 +104,7 @@ const createLimiters = (overrides = {}) => {
   // Routes for a signed-in person: check the login first, so the limit counts that person.
   limits.authed = [authMiddleware, limits.dashboard];
   limits.authedDestructive = [authMiddleware, limits.destructive];
+  limits.authedExport = [authMiddleware, limits.exportData];
   return limits;
 };
 

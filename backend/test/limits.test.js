@@ -163,6 +163,25 @@ test("deleting is limited much harder than reading", async () => {
   close();
 });
 
+test("downloading all one's data is limited per person, and one person's downloads do not use up another's", async () => {
+  const limits = createLimiters({ exportData: { limit: 2 }, dashboard: { limit: 100 } });
+  const { base, close } = await serve((app) => {
+    app.get("/read", limits.authed, answer);
+    app.get("/export", limits.authedExport, answer);
+  });
+  const alice = { Authorization: `Bearer ${token("alice")}` };
+  const bob = { Authorization: `Bearer ${token("bob")}` };
+  assert.deepEqual(await statuses(3, base, "/export", alice), [200, 200, 429]);
+  assert.deepEqual(await statuses(1, base, "/export", bob), [200], "Bob still has his own allowance");
+  assert.deepEqual(await statuses(5, base, "/read", alice), Array(5).fill(200), "reading the dashboard is not affected");
+  const over = await hit(base, "/export", alice);
+  assert.equal(over.status, 429);
+  const message = (await over.json()).error;
+  assert.match(message, /^Too many data downloads\. Please wait about \d+ minutes and try again\.$/, "an hourly limit says minutes, not thousands of seconds");
+  assert.ok(Number(over.headers.get("retry-after")) > 120, "the Retry-After header is still in seconds");
+  close();
+});
+
 test("RATE_LIMIT_DISABLED=true switches every limit off", async () => {
   const limits = createLimiters({ dashboard: { limit: 1 } });
   const { base, close } = await serve((app) => app.get("/x", limits.authed, answer));
