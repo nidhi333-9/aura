@@ -149,7 +149,7 @@ PAIR_CODE_TTL_SECONDS= (optional, default 600: how long a sensor pairing code st
 TRUST_PROXY_HOPS= (optional, default 3, measured for Render: how many proxies Express believes when it works out a caller's address; check with `GET /api/network-check`, see docs/ARCHITECTURE.md)  
 RATE_LIMIT_DISABLED= (optional: `true` switches every request limit off)  
 
-### ML Service (experimental)
+### ML Service (experimental, suspended in Render: these are needed only if you resume it)
 MONGO_URI= (use a read-only database user — the ML service never writes)  
 ML_SHARED_SECRET= (required — every request without this secret is rejected)  
 

@@ -34,7 +34,7 @@ flowchart TB
 | Dashboard | `frontend/` | React + Vite + Tailwind + Recharts. Shows the score and the charts. | Vercel |
 | Backend | `backend/` | Express + Mongoose. The only part that **writes** to the database. | Render |
 | Database | n/a | MongoDB Atlas, database `aura`. | Atlas |
-| ML service | `ml-service/` | FastAPI + pandas. **Read only.** **Experimental; nothing calls it any more**: its code stays for the training scripts in `ml-service/training/`, and its Render service can be switched off. See `ml-service/README.md`. | Render |
+| ML service | `ml-service/` | FastAPI + pandas. **Read only.** **Experimental; nothing calls it any more**: its code stays for the training scripts in `ml-service/training/`, and its Render service (`aura-ml`) is suspended. See `ml-service/README.md`. | Render |
 
 Two rules the project follows:
 
@@ -294,7 +294,7 @@ curl -s -H "X-Forwarded-For: 9.9.9.9" https://aura-backend-hmq3.onrender.com/api
 | --- | --- | --- |
 | Dashboard | Vercel (rebuilds when `main` changes) | `VITE_API_URL`: the backend's address. |
 | Backend | Render (deployed by the CI workflow after the tests pass; see section 10) | `MONGO_URI`, `JWT_SECRET` (required), `YOUTUBE_API_KEY`, optional `PAIR_CODE_TTL_SECONDS`, `TRUST_PROXY_HOPS` (default 3), `RATE_LIMIT_DISABLED` (`true` switches every request limit off). |
-| ML service | Render | `MONGO_URI` (use a read-only user), `ML_SHARED_SECRET`. |
+| ML service | Render (suspended, not needed) | Nothing at the moment. If resumed: `MONGO_URI` (use a read-only user) and `ML_SHARED_SECRET`, both removed while it is suspended. |
 | Database | MongoDB Atlas | n/a |
 | Sensor builds | GitHub Actions, on a tag like `v1.1.2` | n/a (see below) |
 

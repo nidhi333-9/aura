@@ -3,7 +3,7 @@
 **Status:** nothing in Aura calls this service any more. The focus score, the site labels and every chart are
 computed by the backend (`backend/services/classify.js`, `focus.js`, `rollups.js`; see
 [docs/ARCHITECTURE.md](../docs/ARCHITECTURE.md)). This folder is kept for experiments, not for the product, and its
-Render deployment can stay switched off.
+Render service (`aura-ml`) is suspended. To use it again: in Render, open the `aura-ml` service, press Resume, and set `ML_SHARED_SECRET` and `MONGO_URI` again (they were removed).
 
 Despite the name, there is **no trained model** in here. `core/processor.py` holds keyword rules and a `pandas`
 calculation, the same kind of logic the backend now does faster and in one place.
