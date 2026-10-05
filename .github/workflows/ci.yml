@@ -1,0 +1,84 @@
+name: CI
+
+# Runs on every push to main and on every pull request, so a change that breaks the tests, the
+# website's lint/build or the sensor is noticed before it goes live (Vercel and Render deploy
+# from main). It only reads the code: it needs no secrets and never touches the real database.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+# A newer push cancels the older run for the same branch.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Backend tests
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      # The backend has no lockfile (Render installs the same way), so this is a plain install.
+      - run: npm install --no-audit --no-fund
+      # No database needed: the tests use stand-ins for it.
+      - run: npm test
+
+  website:
+    name: Website lint and build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci --no-audit --no-fund
+      - run: npm run lint
+      - run: npm run build
+
+  sensor:
+    name: Sensor tests (macOS)
+    # macOS because the sensor's window library only starts on a real desktop OS, and the sensor is
+    # built on macOS-14 too.
+    runs-on: macos-14
+    defaults:
+      run:
+        working-directory: tracker
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: pip install pywinctl requests
+      - run: python -m unittest test_sensor -v
+
+  dependency-audit:
+    name: Dependency audit (warns, never blocks)
+    runs-on: ubuntu-latest
+    # A newly published advisory must not turn an unrelated push red. Read this job's log to see it.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Website packages
+        working-directory: frontend
+        run: npm ci --no-fund && npm audit --omit=dev --audit-level=moderate
+      - name: Backend packages
+        working-directory: backend
+        run: npm install --package-lock-only --ignore-scripts --no-fund && npm audit --omit=dev --audit-level=moderate
