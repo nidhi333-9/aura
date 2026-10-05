@@ -86,6 +86,11 @@ const Privacy = () => (
           counts, for each day, of time that was Productive, Neutral or a Distraction. They contain no titles, apps or
           websites.
         </p>
+        <p>
+          The owner also keeps private backups of the database on their own computer, about one a week, and the 12
+          newest are kept (roughly 3 months). Data you delete can therefore stay in a backup until that backup is
+          replaced.
+        </p>
       </Section>
 
       <Section title="Your controls">
