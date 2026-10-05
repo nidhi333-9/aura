@@ -293,7 +293,7 @@ curl -s -H "X-Forwarded-For: 9.9.9.9" https://aura-backend-hmq3.onrender.com/api
 | Service | Host | Settings it needs |
 | --- | --- | --- |
 | Dashboard | Vercel (rebuilds when `main` changes) | `VITE_API_URL`: the backend's address. |
-| Backend | Render (redeploys when `main` changes) | `MONGO_URI`, `JWT_SECRET` (required), `YOUTUBE_API_KEY`, optional `PAIR_CODE_TTL_SECONDS`, `TRUST_PROXY_HOPS` (default 3), `RATE_LIMIT_DISABLED` (`true` switches every request limit off). |
+| Backend | Render (deployed by the CI workflow after the tests pass; see section 10) | `MONGO_URI`, `JWT_SECRET` (required), `YOUTUBE_API_KEY`, optional `PAIR_CODE_TTL_SECONDS`, `TRUST_PROXY_HOPS` (default 3), `RATE_LIMIT_DISABLED` (`true` switches every request limit off). |
 | ML service | Render | `MONGO_URI` (use a read-only user), `ML_SHARED_SECRET`. |
 | Database | MongoDB Atlas | n/a |
 | Sensor builds | GitHub Actions, on a tag like `v1.1.2` | n/a (see below) |
@@ -309,7 +309,7 @@ and embeds a Spotify playlist picked by your score in the browser.
 
 | I want to... | Do this |
 | --- | --- |
-| Ship a code change | Push to `main`. Vercel and Render redeploy by themselves. |
+| Ship a code change | Push to `main`. Vercel redeploys the website by itself. For the backend, GitHub runs the tests and, if they pass, its `deploy` job asks Render (deploy hook, secret `RENDER_DEPLOY_HOOK`) to deploy that exact commit and waits until `GET /api/version` shows it, so a failed deploy turns the run red. Render's own Auto-Deploy is set to Off. See the README, "Deploying". |
 | Ship a new sensor | First try the build without publishing anything: GitHub, **Actions**, **Build Sensor**, **Run workflow** (the built files appear as downloads on the run page for 7 days). Then `git tag v1.2.3` and `git push origin v1.2.3`: GitHub Actions builds the sensor for Apple Silicon, Intel and Windows, checks that each Mac build starts, and attaches them to a release. The installers always download the **latest** release. |
 | Is the live backend up to date? | `cd backend && node scripts/check-deploy.js`. It compares the commit the live backend runs (`GET /api/version`) with the newest commit on GitHub: UP TO DATE, BEHIND, or UNKNOWN (an older backend that has no version page). Render deploys only after the CI checks pass, so BEHIND for a few minutes after a push is normal. |
 | Update my own sensor | Stop it, run the install command again (no code needed, the saved key is reused). |

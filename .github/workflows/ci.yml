@@ -66,6 +66,35 @@ jobs:
       - run: pip install pywinctl requests
       - run: python -m unittest test_sensor -v
 
+  deploy:
+    name: Deploy the backend to Render (only after the backend tests pass)
+    needs: backend
+    # Only for a push to main, never for a pull request.
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    env:
+      # Render's private "deploy hook" URL, stored as a GitHub secret (README: "Deploying"). It lets this
+      # workflow, and nothing else, start a deploy. It is never printed.
+      RENDER_DEPLOY_HOOK: ${{ secrets.RENDER_DEPLOY_HOOK }}
+    steps:
+      - name: Say so when deploying is not set up
+        if: env.RENDER_DEPLOY_HOOK == ''
+        run: echo "::warning::The secret RENDER_DEPLOY_HOOK is not set, so nothing was deployed. See README, 'Deploying'."
+      - uses: actions/checkout@v4
+        if: env.RENDER_DEPLOY_HOOK != ''
+      - uses: actions/setup-node@v4
+        if: env.RENDER_DEPLOY_HOOK != ''
+        with:
+          node-version: 22
+      - name: Ask Render to deploy exactly this commit
+        if: env.RENDER_DEPLOY_HOOK != ''
+        run: curl -fsS -X POST "${RENDER_DEPLOY_HOOK}&ref=${GITHUB_SHA}" -o /dev/null -w "Render accepted the request (HTTP %{http_code})\n"
+      # A deploy that never goes live must not look like success: wait until the live backend says it runs
+      # this commit (GET /api/version). A free instance can take a few minutes to build and start.
+      - name: Wait until the live backend runs this commit
+        if: env.RENDER_DEPLOY_HOOK != ''
+        run: node backend/scripts/check-deploy.js --commit "$GITHUB_SHA" --wait 720 --every 10
+
   dependency-audit:
     name: Dependency audit (warns, never blocks)
     runs-on: ubuntu-latest
