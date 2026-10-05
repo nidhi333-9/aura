@@ -1,6 +1,8 @@
 # Aura 🌟
 > Understand your productivity without saying a word.
 
+[![CI](https://github.com/nidhi333-9/aura/actions/workflows/ci.yml/badge.svg)](https://github.com/nidhi333-9/aura/actions/workflows/ci.yml)
+
 Aura is a productivity tracker that quietly notes which app or website is in front of you, labels each moment Productive, Neutral or Distraction, and turns that into a live focus score and history charts, so you can see when you focus best. You stay in control: you can see what is stored and delete it, or your whole account, at any time.
 
 ## 🖥️ Preview
@@ -218,7 +220,34 @@ repairs recent drift.
 ```bash
 cd backend && npm test
 cd tracker && python -m unittest test_sensor -v   # needs: pip install pywinctl requests
+cd frontend && npm run lint && npm run build
 ```
+
+GitHub runs all of these automatically on every push and pull request (`.github/workflows/ci.yml`), plus a package
+audit that warns but never blocks. The result is the badge at the top of this page and the **Actions** tab.
+
+## 💾 Backups
+
+The free Atlas database has no automatic backups, and the daily summaries are the only long-term record of your
+history, so Aura makes its own. From `backend/` (needs `brew install mongodb-database-tools`):
+
+```bash
+node scripts/backup.js                       # one backup now, saved in ~/aura-backups (read-only; private to your user)
+bash scripts/schedule-backup.sh install      # automatic: checks every evening, backs up when the newest is 6+ days old
+bash scripts/schedule-backup.sh status       # is it running, how old is the newest backup, last lines of the log
+```
+
+The schedule keeps the newest 12 backups (about three months) and runs only while the Mac is on; a night it was off
+or offline is retried the next night. `schedule-backup.sh run-now` tries it immediately and `remove` takes it away.
+To check that a backup works, restore it into a *different* database name and compare:
+
+```bash
+mongorestore --gzip --uri="mongodb://127.0.0.1:27017" --nsFrom "aura.*" --nsTo "aura_restored.*" ~/aura-backups/<folder>
+```
+
+To bring real data back, restore into the real database (switch raw-sample expiry off first, or the old samples are
+deleted again). Backups hold everyone's window titles: keep them private and never put them inside the project folder
+(the script refuses to). They live only on this Mac, so copy the folder somewhere else now and then.
 
 ## 👩‍💻 Author
 

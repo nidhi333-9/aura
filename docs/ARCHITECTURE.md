@@ -317,7 +317,8 @@ and embeds a Spotify playlist picked by your score in the browser.
 | Fix or rebuild the daily summaries | `node scripts/rebuild-rollups.js --apply` (repeatable). `--disable` makes history read raw data again. |
 | Let old raw samples expire (the only thing that deletes data) | `node scripts/backup.js` (read-only copy to `~/aura-backups`), then `node scripts/enable-raw-ttl.js` as a dry run, then `--days 30 --apply`. |
 | Hide secrets in titles that were saved before the cleaner existed | From `backend/`: `node scripts/redact-titles.js` (dry run), then `--apply`. Safe to repeat. |
-| Run the tests | `cd backend && npm test`. `cd tracker && python -m unittest test_sensor -v`. |
+| Run the tests | `cd backend && npm test`. `cd tracker && python -m unittest test_sensor -v`. `cd frontend && npm run lint && npm run build`. GitHub runs all three on every push (`.github/workflows/ci.yml`; see the Actions tab). |
+| Back up the database | `node scripts/backup.js` once, or `bash scripts/schedule-backup.sh install` for an automatic one (checks every evening, backs up when the newest is 6+ days old, keeps the newest 12). `status` shows how it is doing. Free Atlas has no snapshots of its own. |
 
 Deploy order for changes that touch more than one part: **backend first**, then the dashboard, then the
 sensor release. Every part is written to tolerate the one before it being old.
@@ -362,3 +363,6 @@ Honest list, most important first:
    recognised with the website host, which only the Mac sensor sends.
 7. **The ML classifier was never built.** It would need labelled examples, and the website host removes most
    of the need.
+8. **Backups live on one Mac.** The free database has no snapshots, so `scripts/backup.js` (scheduled with
+   `scripts/schedule-backup.sh`) copies it to `~/aura-backups`. That runs only while the Mac is on, and nothing
+   keeps a copy off the machine unless someone copies the folder elsewhere.
