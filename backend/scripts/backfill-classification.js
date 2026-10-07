@@ -43,10 +43,14 @@ async function main() {
 
   // Native driver on purpose: no per-document casting overhead for a one-off job.
   const cursor = Activity.collection
-    .find(filter, { projection: { app_name: 1, window_title: 1, domain: 1 } })
+    .find(filter, { projection: { app_name: 1, window_title: 1, domain: 1, site: 1, category: 1 } })
     .sort({ _id: 1 });
 
   const byCategory = {};
+  // What would CHANGE, so a dry run lets you judge the keyword guesses (services/guess.js) on your
+  // own data before anything is written: "Neutral -> Productive" and the names behind it.
+  const moves = {};
+  const movedNames = new Map();
   let ops = [];
   let seen = 0;
   let written = 0;
@@ -69,6 +73,12 @@ async function main() {
     }
     const { site, category } = classify(doc.app_name, doc.window_title, doc.domain);
     byCategory[category] = (byCategory[category] || 0) + 1;
+    if (doc.category && doc.category !== category) {
+      const move = `${doc.category} -> ${category}`;
+      moves[move] = (moves[move] || 0) + 1;
+      const name = `${move}: ${site}`;
+      movedNames.set(name, (movedNames.get(name) || 0) + 1);
+    }
     ops.push({
       updateOne: { filter: { _id: doc._id }, update: { $set: { site, category } } },
     });
@@ -79,6 +89,14 @@ async function main() {
 
   console.log(`Scanned ${seen} rows${skipped ? `, skipped ${skipped} without an app_name` : ""}.`);
   console.log("Category breakdown:", byCategory);
+  if (Object.keys(moves).length) {
+    console.log("Rows whose category changes:", moves);
+    const top = [...movedNames.entries()].sort((a, b) => b[1] - a[1]).slice(0, 25);
+    console.log("Biggest changes (rows, from -> to: app or site):");
+    for (const [name, count] of top) console.log(`  ${String(count).padStart(6)}  ${name}`);
+  } else if (force) {
+    console.log("No row changes category.");
+  }
   console.log(apply ? `Updated ${written} rows.` : "Dry run only. Re-run with --apply to write.");
   process.exit(0);
 }

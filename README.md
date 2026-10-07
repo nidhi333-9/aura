@@ -198,8 +198,11 @@ node scripts/backfill-classification.js           # dry run: shows what would ch
 node scripts/backfill-classification.js --apply   # writes the labels
 ```
 
-It is safe to re-run. Use `--apply --force` to relabel every row after editing a rule in `services/classify.js`.
-The dashboard works before the backfill too (unlabelled rows are classified on the fly).
+It is safe to re-run. Use `--apply --force` to relabel every row after editing a rule in `services/classify.js` or
+the word lists in `services/guess.js` (the guess for apps and sites no rule knows). The dry run lists the biggest
+category changes first, so check them before `--apply`. After `--force`, run `node scripts/rebuild-rollups.js --apply`,
+because the daily summaries count categories. The dashboard works before the backfill too (unlabelled rows are
+classified on the fly).
 
 ### Long-term history: rollups and raw-data expiry
 

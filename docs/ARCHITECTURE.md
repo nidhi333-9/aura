@@ -135,14 +135,25 @@ Code: `backend/routes/activity.js`, `backend/services/classify.js`, `backend/ser
 
 | Situation | What happens |
 | --- | --- |
-| A desktop app (VS Code, Terminal, Spotify...) | Looked up by app name. Windows names like `Code.exe` are treated the same as `Code`. |
-| A browser, and the sensor sent a website host | Known host (`linkedin.com`) gives the site name. An unknown host is shown as itself (`prabhupada.world`), category Neutral. |
-| A browser, no host (Firefox, Windows, old sensor) | The window title is cleaned (browser name, profile, "High memory usage" removed) and matched against keywords. The site name at the **end** of the title wins over words inside it. No match: "Other website". |
+| A desktop app (VS Code, Terminal, Spotify...) | Looked up by app name. Windows names like `Code.exe` are treated the same as `Code`. A name not in the list is **guessed** (see below). |
+| A browser, and the sensor sent a website host | Known host (`linkedin.com`) gives the site name and category. An unknown host is shown as itself (`prabhupada.world`) and its category is **guessed**. |
+| A browser, no host (Firefox, Windows, old sensor) | The window title is cleaned (browser name, profile, "High memory usage" removed) and matched against keywords. The site name at the **end** of the title wins over words inside it. No match: "Other website", with the category **guessed** from the title. |
 | Desktop, lock screen, no window | **Idle**. Idle samples are ignored everywhere. |
 
 The four categories: **Productive** (code editors, GitHub, LeetCode, docs...), **Neutral** (default; LinkedIn,
 Gmail...), **Distraction** (YouTube, Netflix, Instagram...), **Idle**. The lists live in one file,
 `backend/services/classify.js`, so changing a rule is a one-file change plus a test.
+
+**Names no rule knows are guessed, with no AI and no network** (`backend/services/guess.js`). Only after every
+known rule has failed, it looks for telling words in the app name, the website's host name and the page title and
+adds up the evidence: `docs`, `python`, `tutorial`, `localhost`, `.edu` count towards Productive; `game`, `movie`,
+`anime`, `casino` towards Distraction. A strong word counts 2, a weak one 1; a category needs 2 points and must
+beat the other side, otherwise the answer stays **Neutral**. The guess changes only the *category*; the site name
+stays what the sensor reported. Known sites always win: "Funny memes - YouTube" is YouTube whatever the words say.
+To fix a wrong guess, add the site or app to `classify.js` (it then wins), or edit the word lists in `guess.js`.
+Limits: it reads words, not meaning (a page about "Monty Python" looks like Python), and it never saw your
+workflow. Before relabelling old rows, run `backfill-classification.js --force` as a dry run and read the
+"Biggest changes" list.
 
 On Mac the sensor gets the website host by asking the browser for its front tab's address. It sends **only
 the host name**, never the path or query, and skips private windows. This needs the Mac permissions

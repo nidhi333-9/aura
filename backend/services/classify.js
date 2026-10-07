@@ -11,6 +11,8 @@
 //      (Firefox, Windows, an older sensor, no permission). Titles only sometimes name the site,
 //      so what is left stays "Other website".
 
+const { guessFromApp, guessFromHost, guessFromTitle } = require("./guess");
+
 const CATEGORIES = ["Productive", "Neutral", "Distraction", "Idle"];
 
 // ---- apps -------------------------------------------------------------------------------
@@ -55,6 +57,51 @@ const DESKTOP_SITE_MAP = new Map([
   ["webstorm", ["WebStorm", "Productive"]],
   ["claude", ["Claude", "Productive"]],
   ["chatgpt", ["ChatGPT", "Productive"]],
+  // Mainstream apps whose names are too ambiguous (or too glued together) for the keyword guess in
+  // services/guess.js. Everything not listed here is guessed from its name instead.
+  ["xcode", ["Xcode", "Productive"]],
+  ["android studio", ["Android Studio", "Productive"]],
+  ["studio64", ["Android Studio", "Productive"]],
+  ["visual studio", ["Visual Studio", "Productive"]],
+  ["devenv", ["Visual Studio", "Productive"]],
+  ["idea64", ["IntelliJ", "Productive"]],
+  ["pycharm64", ["PyCharm", "Productive"]],
+  ["webstorm64", ["WebStorm", "Productive"]],
+  ["rider", ["Rider", "Productive"]],
+  ["rider64", ["Rider", "Productive"]],
+  ["zed", ["Zed", "Productive"]],
+  ["sublime text", ["Sublime Text", "Productive"]],
+  ["notepad++", ["Notepad++", "Productive"]],
+  ["obsidian", ["Obsidian", "Productive"]],
+  ["notion", ["Notion", "Productive"]],
+  ["figma", ["Figma", "Productive"]],
+  ["microsoft word", ["Word", "Productive"]],
+  ["winword", ["Word", "Productive"]],
+  ["microsoft excel", ["Excel", "Productive"]],
+  ["excel", ["Excel", "Productive"]],
+  ["microsoft powerpoint", ["PowerPoint", "Productive"]],
+  ["powerpnt", ["PowerPoint", "Productive"]],
+  ["microsoft onenote", ["OneNote", "Productive"]],
+  ["onenote", ["OneNote", "Productive"]],
+  ["pages", ["Pages", "Productive"]],
+  ["numbers", ["Numbers", "Productive"]],
+  ["keynote", ["Keynote", "Productive"]],
+  ["docker desktop", ["Docker", "Productive"]],
+  ["github desktop", ["GitHub Desktop", "Productive"]],
+  ["anki", ["Anki", "Productive"]],
+  ["steam", ["Steam", "Distraction"]],
+  ["epicgameslauncher", ["Epic Games", "Distraction"]],
+  ["epic games launcher", ["Epic Games", "Distraction"]],
+  ["netflix", ["Netflix", "Distraction"]],
+  // Chat and meetings: neither helps nor hurts the score (the user's call). Listed so they are fixed
+  // by name and the keyword guess is never consulted for them.
+  ["microsoft teams", ["Microsoft Teams", "Neutral"]],
+  ["teams", ["Microsoft Teams", "Neutral"]],
+  ["ms-teams", ["Microsoft Teams", "Neutral"]],
+  ["slack", ["Slack", "Neutral"]],
+  ["zoom.us", ["Zoom", "Neutral"]],
+  ["zoom", ["Zoom", "Neutral"]],
+  ["discord", ["Discord", "Neutral"]],
   ["spotify", ["Spotify", "Neutral"]],
   ["finder", ["Finder", "Neutral"]],
   ["explorer", ["File Explorer", "Neutral"]],
@@ -104,6 +151,10 @@ const WEBSITE_RULES = [
   ["MongoDB", "Productive", "mongodb"],
   ["Vercel", "Productive", "vercel"],
   ["Netlify", "Productive", "netlify"],
+  ["Monkeytype", "Productive", "monkeytype"],
+  // Office in the browser counts like desktop Excel/Word/PowerPoint. "$excel" only at the END of the
+  // title ("Book1 - Excel"): the word is far too common to trust anywhere in one.
+  ["Microsoft 365", "Productive", "microsoft 365", "$excel", "$powerpoint"],
 
   ["Hotstar", "Distraction", "hotstar"],
   ["Netflix", "Distraction", "netflix"],
@@ -125,6 +176,7 @@ const WEBSITE_RULES = [
   ["Google Calendar", "Neutral", "google calendar"],
   ["Google Meet", "Neutral", "google meet"],
   ["WhatsApp", "Neutral", "whatsapp"],
+  ["Microsoft Teams", "Neutral", "microsoft teams"],
   ["Slack", "Neutral", "$slack"],
   ["Zoom", "Neutral", "$zoom"],
   ["Canva", "Neutral", "canva"],
@@ -190,6 +242,9 @@ const SITE_DOMAINS = new Map(
     "MongoDB": ["mongodb.com"],
     "Vercel": ["vercel.com"],
     "Netlify": ["netlify.com"],
+    "Monkeytype": ["monkeytype.com"],
+    "Microsoft 365": ["office.com", "office365.com", "microsoft365.com"],
+    "Microsoft Teams": ["teams.microsoft.com", "teams.live.com"],
     "Hugging Face": ["huggingface.co"],
     "Google Colab": ["colab.research.google.com"],
     "Hotstar": ["hotstar.com"],
@@ -311,26 +366,31 @@ const siteOfTitle = (title) => {
 };
 
 // `domain` is optional: the host name of the active browser tab, when the sensor could read it.
+//
+// Order: a known website (by host, then by title), a known desktop app, and only then a guess from
+// the words in the name (services/guess.js). The guess changes the CATEGORY of a name no rule knows;
+// the site label stays what the sensor reported ("prabhupada.world", "Other website", the app name).
 const classify = (appName, windowTitle = "", domain = null) => {
   const key = appKey(appName);
 
   if (BROWSERS.has(key)) {
+    const title = cleanTitle(windowTitle);
     const host = normalizeDomain(domain);
     if (host) {
       const site = siteOfDomain(host);
       if (site) return { site, category: CATEGORY_OF_SITE.get(site) };
       // google.com is search results, Maps, Translate...: only its titles can tell search apart.
       if (/^google\.[a-z.]+$/.test(host)) {
-        const rule = siteOfTitle(cleanTitle(windowTitle));
+        const rule = siteOfTitle(title);
         if (rule?.site === "Google Search") return { site: rule.site, category: rule.category };
       }
-      return { site: labelOfDomain(host), category: "Neutral" };
+      return { site: labelOfDomain(host), category: guessFromHost(host, title) };
     }
 
-    const rule = siteOfTitle(cleanTitle(windowTitle));
+    const rule = siteOfTitle(title);
     return rule
       ? { site: rule.site, category: rule.category }
-      : { site: "Other website", category: "Neutral" };
+      : { site: "Other website", category: guessFromTitle(title) };
   }
 
   if (DESKTOP_SITE_MAP.has(key)) {
@@ -338,7 +398,7 @@ const classify = (appName, windowTitle = "", domain = null) => {
     return { site, category };
   }
 
-  return { site: String(appName ?? "").replace(/\.exe$/i, ""), category: "Neutral" };
+  return { site: String(appName ?? "").replace(/\.exe$/i, ""), category: guessFromApp(appName) };
 };
 
 module.exports = { classify, normalizeDomain, appKey, CATEGORIES, SITE_DOMAINS, WEBSITE_RULES };
