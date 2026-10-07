@@ -129,7 +129,8 @@ const DOMAIN_CASES = [
   ["Google Chrome", "x", "mail.example.com", "example.com", "Neutral"],
   ["Google Chrome", "x", "news.bbc.co.uk", "bbc.co.uk", "Neutral"],
   ["Google Chrome", "x", "someone.vercel.app", "someone.vercel.app", "Neutral"],
-  ["Google Chrome", "x", "localhost", "localhost", "Neutral"],
+  ["Google Chrome", "x", "localhost", "localhost", "Productive"], // a page from the user's own machine = a project
+  ["Google Chrome", "x", "127.0.0.1", "127.0.0.1", "Productive"],
   ["Google Chrome", "x", "192.168.0.10", "192.168.0.10", "Neutral"],
 
   // The domain is the truth: words in the title must not override it.
