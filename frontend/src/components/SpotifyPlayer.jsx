@@ -1,4 +1,10 @@
 const getPlaylistInfo = (score) => {
+  if (score > 90)
+    return {
+      id: "6JzOnfyq2wzaEoDmCBtcz1",
+      name: "Intense Concentration",
+      desc: "Intense concentration music",
+    };
   if (score > 80)
     return {
       id: "37i9dQZF1DX8NTLIssmsS6",
