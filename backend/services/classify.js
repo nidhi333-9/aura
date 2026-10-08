@@ -89,6 +89,7 @@ const DESKTOP_SITE_MAP = new Map([
   ["docker desktop", ["Docker", "Productive"]],
   ["github desktop", ["GitHub Desktop", "Productive"]],
   ["anki", ["Anki", "Productive"]],
+  ["apnacollege", ["ApnaCollege", "Productive"]],
   ["steam", ["Steam", "Distraction"]],
   ["epicgameslauncher", ["Epic Games", "Distraction"]],
   ["epic games launcher", ["Epic Games", "Distraction"]],
