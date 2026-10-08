@@ -139,6 +139,7 @@ const WEBSITE_RULES = [
   ["CodeChef", "Productive", "codechef"],
   ["Coursera", "Productive", "coursera"],
   ["Udemy", "Productive", "udemy"],
+  ["Apna College", "Productive", "apnacollege"],
   ["W3Schools", "Productive", "w3schools"],
   ["MDN Docs", "Productive", "developer.mozilla", "mdn web docs"],
   ["freeCodeCamp", "Productive", "freecodecamp"],
