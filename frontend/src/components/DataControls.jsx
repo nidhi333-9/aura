@@ -4,14 +4,16 @@ import { Download, Trash2 } from "lucide-react";
 import { api } from "../api/client";
 import useResource from "../hooks/useResource";
 import { RAW_SAMPLE_DAYS } from "../utils/retention";
-import { errorMessageOf, localDateStamp, readableSize, saveBlob } from "../utils/download";
+import {
+  errorMessageOf,
+  localDateStamp,
+  readableSize,
+  saveBlob,
+} from "../utils/download";
 
-// "Your data": what Aura holds about you, a way to download a copy, and two ways to remove it.
-// Deleting always takes a second, deliberate step, and the server insists on it too (it wants the
-// word DELETE).
 const CONFIRM_WORD = "DELETE";
 const SUMMARY_REFRESH_MS = 5 * 60 * 1000;
-// A sleeping free-tier server can take a minute to wake, and a big file takes a while to arrive.
+
 const DOWNLOAD_TIMEOUT_MS = 5 * 60 * 1000;
 
 const DataControls = () => {
@@ -46,7 +48,9 @@ const DataControls = () => {
         navigate("/", { replace: true });
         return false;
       }
-      setError(err.response?.data?.error || "Something went wrong. Please try again.");
+      setError(
+        err.response?.data?.error || "Something went wrong. Please try again.",
+      );
       return false;
     } finally {
       setBusy(false);
@@ -58,17 +62,27 @@ const DataControls = () => {
     setError(null);
     setSaved(null);
     try {
-      const res = await api.get("/api/account/export", { responseType: "blob", timeout: DOWNLOAD_TIMEOUT_MS });
+      const res = await api.get("/api/account/export", {
+        responseType: "blob",
+        timeout: DOWNLOAD_TIMEOUT_MS,
+      });
       const name = `aura-data-${localDateStamp()}.json`;
       saveBlob(res.data, name);
-      setSaved(`Saved ${name} (${readableSize(res.data.size)}). It includes your window titles, so keep it private.`);
+      setSaved(
+        `Saved ${name} (${readableSize(res.data.size)}). It includes your window titles, so keep it private.`,
+      );
     } catch (err) {
       if (err.response?.status === 401) {
         localStorage.removeItem("token");
         navigate("/", { replace: true });
         return;
       }
-      setError(await errorMessageOf(err, "Could not download your data. Please check your connection and try again."));
+      setError(
+        await errorMessageOf(
+          err,
+          "Could not download your data. Please check your connection and try again.",
+        ),
+      );
     } finally {
       setDownloading(false);
     }
@@ -94,12 +108,18 @@ const DataControls = () => {
       className="mt-16 bg-white/60 backdrop-blur-xl p-8 md:p-12 rounded-[40px] border border-white/40 shadow-xl"
     >
       <div className="max-w-2xl mx-auto">
-        <h2 className="text-2xl font-extrabold text-[var(--aura-dark)] tracking-tight">Your data</h2>
+        <h2 className="text-2xl font-extrabold text-[var(--aura-dark)] tracking-tight">
+          Your data
+        </h2>
         <p className="text-sm font-medium text-slate-500 mt-2">
           {summary.error && !held ? (
             <>
               Couldn't check what Aura holds.{" "}
-              <button type="button" onClick={summary.retry} className="underline underline-offset-4 font-bold hover:opacity-80">
+              <button
+                type="button"
+                onClick={summary.retry}
+                className="underline underline-offset-4 font-bold hover:opacity-80"
+              >
                 Try again
               </button>
             </>
@@ -109,26 +129,39 @@ const DataControls = () => {
             "Aura holds no tracked activity for you right now."
           ) : (
             <>
-              Aura holds <b>{held.samples.toLocaleString()}</b> tracked samples, including the window titles (samples
-              older than {RAW_SAMPLE_DAYS} days are deleted automatically), and daily summaries for{" "}
-              <b>{held.days_summarised.toLocaleString()}</b> {held.days_summarised === 1 ? "day" : "days"} (counts only,
-              no titles).
+              Aura holds <b>{held.samples.toLocaleString()}</b> tracked samples,
+              including the window titles (samples older than {RAW_SAMPLE_DAYS}{" "}
+              days are deleted automatically), and daily summaries for{" "}
+              <b>{held.days_summarised.toLocaleString()}</b>{" "}
+              {held.days_summarised === 1 ? "day" : "days"} (counts only, no
+              titles).
             </>
           )}{" "}
-          <a href="/privacy" target="_blank" rel="noreferrer" className="underline underline-offset-4 font-bold hover:opacity-80">
+          <a
+            href="/privacy"
+            target="_blank"
+            rel="noreferrer"
+            className="underline underline-offset-4 font-bold hover:opacity-80"
+          >
             Read the privacy notice
           </a>
           .
         </p>
 
         {done && (
-          <p role="status" className="mt-5 text-sm font-semibold text-emerald-700">
+          <p
+            role="status"
+            className="mt-5 text-sm font-semibold text-emerald-700"
+          >
             {done}
           </p>
         )}
 
         {saved && (
-          <p role="status" className="mt-5 text-sm font-semibold text-emerald-700">
+          <p
+            role="status"
+            className="mt-5 text-sm font-semibold text-emerald-700"
+          >
             {saved}
           </p>
         )}
@@ -173,8 +206,9 @@ const DataControls = () => {
         {step === "data" && (
           <div className="mt-6 rounded-2xl border border-red-200 bg-red-50/70 px-6 py-5">
             <p className="text-sm font-semibold text-red-900">
-              Delete all your tracked samples and every chart? Your account and paired devices stay, and the sensor
-              keeps recording new activity. This can't be undone.
+              Delete all your tracked samples and every chart? Your account and
+              paired devices stay, and the sensor keeps recording new activity.
+              This can't be undone.
             </p>
             <div className="flex gap-3 mt-4">
               <button
@@ -200,10 +234,14 @@ const DataControls = () => {
         {step === "account" && (
           <div className="mt-6 rounded-2xl border border-red-200 bg-red-50/70 px-6 py-5">
             <p className="text-sm font-semibold text-red-900">
-              This deletes your account, your paired devices and all your tracked data. Your sensors stop by
-              themselves. This can't be undone.
+              This deletes your account, your paired devices and all your
+              tracked data. Your sensors stop by themselves. This can't be
+              undone.
             </p>
-            <label className="block mt-4 text-sm font-semibold text-red-900" htmlFor="confirm-delete">
+            <label
+              className="block mt-4 text-sm font-semibold text-red-900"
+              htmlFor="confirm-delete"
+            >
               Type <b>{CONFIRM_WORD}</b> to confirm
             </label>
             <input

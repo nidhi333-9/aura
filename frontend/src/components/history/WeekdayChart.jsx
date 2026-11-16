@@ -21,9 +21,19 @@ const WeekdayTooltip = ({ active, payload, minDays }) => {
         <TooltipRow value="No data" label="no counted days" />
       ) : (
         <>
-          <TooltipRow color={viz.productive} value={`${w.focus}%`} label="average focus" />
-          <TooltipRow value={String(w.days)} label={w.days === 1 ? "counted day" : "counted days"} />
-          <TooltipRow value={formatDuration(w.avg_active_min)} label="tracked per day" />
+          <TooltipRow
+            color={viz.productive}
+            value={`${w.focus}%`}
+            label="average focus"
+          />
+          <TooltipRow
+            value={String(w.days)}
+            label={w.days === 1 ? "counted day" : "counted days"}
+          />
+          <TooltipRow
+            value={formatDuration(w.avg_active_min)}
+            label="tracked per day"
+          />
           {w.days < minDays && (
             <p className="mt-1" style={{ color: viz.ink.secondary }}>
               Under {minDays} days, so too few to compare
@@ -35,8 +45,6 @@ const WeekdayTooltip = ({ active, payload, minDays }) => {
   );
 };
 
-// Emphasis form: one weekday in the accent, the rest in the de-emphasis gray, because the
-// question is "which day am I best?". Weekdays with too few counted days are faded.
 const WeekdayChart = memo(function WeekdayChart({ byWeekday, best, minDays }) {
   const data = useMemo(
     () => byWeekday.map((w) => ({ ...w, label: DOW_SHORT[w.dow - 1] })),
@@ -54,7 +62,14 @@ const WeekdayChart = memo(function WeekdayChart({ byWeekday, best, minDays }) {
           fillOpacity={payload.days < minDays ? 0.45 : 1}
         />
         {isBest && (
-          <text x={x + width / 2} y={y - 6} textAnchor="middle" fontSize={11} fontWeight={700} fill={viz.ink.primary}>
+          <text
+            x={x + width / 2}
+            y={y - 6}
+            textAnchor="middle"
+            fontSize={11}
+            fontWeight={700}
+            fill={viz.ink.primary}
+          >
             {payload.focus}%
           </text>
         )}
@@ -89,7 +104,10 @@ const WeekdayChart = memo(function WeekdayChart({ byWeekday, best, minDays }) {
         style={{ height: 240 }}
       >
         <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={data} margin={{ top: 22, right: 8, left: 0, bottom: 0 }}>
+          <BarChart
+            data={data}
+            margin={{ top: 22, right: 8, left: 0, bottom: 0 }}
+          >
             <CartesianGrid vertical={false} stroke={viz.grid} />
             <XAxis
               dataKey="label"

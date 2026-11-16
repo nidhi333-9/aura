@@ -28,7 +28,6 @@ const failedWith =
   (req, res) =>
     !codes.includes(res.statusCode);
 
-// "45 seconds", "1 second", or, from two minutes on, "about 60 minutes" (hourly limits).
 const waitPhrase = (seconds) => {
   if (seconds >= 120) return `about ${Math.ceil(seconds / 60)} minutes`;
   return `${seconds} second${seconds === 1 ? "" : "s"}`;
@@ -55,8 +54,6 @@ const make = (what, config, extra = {}) =>
     ...extra,
   });
 
-// `overrides` replaces numbers per limit, e.g. createLimiters({ ingest: { limit: 3 } }); the
-// tests use it to hit a limit quickly.
 const createLimiters = (overrides = {}) => {
   const cfg = (name) => ({ ...DEFAULTS[name], ...(overrides[name] || {}) });
 
@@ -91,23 +88,12 @@ const createLimiters = (overrides = {}) => {
     }),
   };
 
-  // Routes for a signed-in person: check the login first, so the limit counts that person.
   limits.authed = [authMiddleware, limits.dashboard];
   limits.authedDestructive = [authMiddleware, limits.destructive];
   limits.authedExport = [authMiddleware, limits.exportData];
   return limits;
 };
 
-// How many proxies Express may believe when it works out the caller's address. The right number
-// is a fact about the host, so it was MEASURED, not guessed. On Render (checked on 4 Oct 2026 with
-// GET /api/network-check) a request reaches this server as:
-//     X-Forwarded-For: <caller>, <a Cloudflare server>, <Render's balancer>
-// and the connection itself comes from one more Render proxy. That is 3 proxies to trust: the
-// caller's address is the first one beyond them. Anything a caller invents sits further LEFT, so
-// it is never believed. Too low (1 or 2) every caller looks like a Render or Cloudflare machine;
-// too high (4) a caller could pass an invented address off as their own.
-// TRUST_PROXY_HOPS overrides it. If the host or its setup ever changes, re-check with
-// /api/network-check (see docs/ARCHITECTURE.md): `ip` must be the caller's real address.
 const DEFAULT_PROXY_HOPS = 3;
 const trustProxyHops = (value = process.env.TRUST_PROXY_HOPS) => {
   if (value === undefined || value === "") return DEFAULT_PROXY_HOPS;

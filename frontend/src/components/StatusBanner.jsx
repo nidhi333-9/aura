@@ -6,7 +6,6 @@ const TONES = {
   blue: "bg-sky-50 text-sky-800 border-sky-200",
 };
 
-// One banner at a time, most important first. Renders nothing when everything is fine.
 const StatusBanner = ({ live, onInstallClick, onPermissionsClick }) => {
   const sensor = live.data?.sensor;
 

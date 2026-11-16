@@ -4,13 +4,7 @@ import SpotifyPlayer from "./SpotifyPlayer";
 import FocusChart from "./FocusChart";
 import StatCard from "./StatCard";
 import { useState } from "react";
-import {
-  LogOut,
-  LayoutDashboard,
-  Zap,
-  Target,
-  Activity,
-} from "lucide-react";
+import { LogOut, LayoutDashboard, Zap, Target, Activity } from "lucide-react";
 import TopSites from "./TopSites";
 import StatusBanner from "./StatusBanner";
 import SensorSetup from "./SensorSetup";
@@ -29,19 +23,20 @@ const MOOD_EMOJI = { deep_focus: "🔥", calm_flow: "🧘", low_energy: "😴" }
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  // Today / Week / Month lives in the URL (?view=week) so a refresh or a shared link
-  // lands on the same tab.
+
   const [searchParams, setSearchParams] = useSearchParams();
   const view = Object.hasOwn(RANGE_BY_VIEW, searchParams.get("view"))
     ? searchParams.get("view")
     : "today";
   const setView = (next) =>
     setSearchParams(next === "today" ? {} : { view: next }, { replace: true });
-  const { live, trend, video } = useAuraData({ trendEnabled: view === "today" });
-  // The page renders immediately; each card handles its own "not loaded yet" state.
+  const { live, trend, video } = useAuraData({
+    trendEnabled: view === "today",
+  });
+
   const analytics = live.data;
-  const score = analytics?.focus_score ?? null; // null = nothing tracked recently
-  const state = analytics?.state ?? null; // { key, label } decided by the server
+  const score = analytics?.focus_score ?? null;
+  const state = analytics?.state ?? null;
   const hasTrendData = trend.data?.some((p) => p.score !== null) ?? false;
   const userName = JSON.parse(localStorage.getItem("user"));
   const [showInsights, setShowInsights] = useState(false);
@@ -112,7 +107,8 @@ const Dashboard = () => {
                 }`}
               ></div>
               <span className="font-bold text-xs uppercase tracking-widest text-[var(--aura-dark)]">
-                {state?.label ?? (live.loading ? "Loading…" : "No recent activity")}
+                {state?.label ??
+                  (live.loading ? "Loading…" : "No recent activity")}
               </span>
             </div>
 
@@ -341,18 +337,20 @@ const Dashboard = () => {
 
                   <div className="bg-black/20 backdrop-blur-md p-6 rounded-3xl border border-white/10 relative z-10">
                     <p className="text-xs font-bold leading-relaxed">
-                      "Cognitive synchronization occurs faster when visual stimuli
-                      match ambient audio frequencies."
+                      "Cognitive synchronization occurs faster when visual
+                      stimuli match ambient audio frequencies."
                     </p>
                   </div>
                 </div>
               </div>
             </div>
-
           </>
         ) : (
           // Same instance for Week and Month: switching keeps the frame and dims it while loading.
-          <HistoryView range={RANGE_BY_VIEW[view]} onInstallClick={scrollToInstall} />
+          <HistoryView
+            range={RANGE_BY_VIEW[view]}
+            onInstallClick={scrollToInstall}
+          />
         )}
 
         <SensorSetup />
@@ -362,7 +360,10 @@ const Dashboard = () => {
         {/* 6. FOOTER */}
         <div className="w-full text-center text-[10px] font-bold uppercase tracking-[0.2em] text-gray-400 mt-24 pb-12">
           Aura © 2026 •{" "}
-          <a href="/privacy" className="underline underline-offset-4 hover:text-gray-600">
+          <a
+            href="/privacy"
+            className="underline underline-offset-4 hover:text-gray-600"
+          >
             Privacy
           </a>
         </div>

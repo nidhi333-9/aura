@@ -81,8 +81,6 @@ const FocusChart = ({ data, liveScore }) => {
 
   const current = currentIndex !== -1 ? chartData[currentIndex] : null;
 
-  // Hours with no data are gaps in the line. A single hour between two gaps would draw
-  // nothing at all, so give just those a dot.
   const renderDot = ({ cx, cy, index, payload }) => {
     const isolated =
       payload?.score != null &&

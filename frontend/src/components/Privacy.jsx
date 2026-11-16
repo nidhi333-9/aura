@@ -1,12 +1,13 @@
 import { RAW_SAMPLE_DAYS } from "../utils/retention";
 
-// The privacy notice, in plain words. If the sensor or the server starts collecting or keeping
-// something different, change this page in the same commit.
-
 const Section = ({ title, children }) => (
   <section className="mt-10">
-    <h2 className="text-xl font-extrabold text-[var(--aura-dark)] tracking-tight mb-3">{title}</h2>
-    <div className="text-slate-600 font-medium leading-relaxed flex flex-col gap-3">{children}</div>
+    <h2 className="text-xl font-extrabold text-[var(--aura-dark)] tracking-tight mb-3">
+      {title}
+    </h2>
+    <div className="text-slate-600 font-medium leading-relaxed flex flex-col gap-3">
+      {children}
+    </div>
   </section>
 );
 
@@ -21,13 +22,19 @@ const List = ({ items }) => (
 const Privacy = () => (
   <div className="min-h-screen bg-[var(--aura-light)] bg-grid-mesh font-sans">
     <main className="max-w-3xl mx-auto px-6 py-12 md:py-16">
-      <a href="/" className="text-sm font-bold text-[var(--aura-blue)] hover:opacity-80">
+      <a
+        href="/"
+        className="text-sm font-bold text-[var(--aura-blue)] hover:opacity-80"
+      >
         ← Back to Aura
       </a>
-      <h1 className="text-4xl font-extrabold text-[var(--aura-dark)] tracking-tight mt-6">Privacy</h1>
+      <h1 className="text-4xl font-extrabold text-[var(--aura-dark)] tracking-tight mt-6">
+        Privacy
+      </h1>
       <p className="text-slate-500 font-medium mt-3">
-        Aura is a student project, not a company. This page says in plain words what it collects, where it goes
-        and how you can remove it. Last updated 5 October 2026.
+        Aura is a student project, not a company. This page says in plain words
+        what it collects, where it goes and how you can remove it. Last updated
+        5 October 2026.
       </p>
 
       <Section title="What the sensor collects">
@@ -41,29 +48,32 @@ const Privacy = () => (
           ]}
         />
         <p>
-          It does <b>not</b> take screenshots, record keystrokes, read passwords or read the content of pages.
+          It does <b>not</b> take screenshots, record keystrokes, read passwords
+          or read the content of pages.
         </p>
         <p>
-          Some titles are web addresses, and addresses can carry login codes. Before saving, Aura hides everything
-          after a “?” or “#” in an address, and anything that looks like a login token.
+          Some titles are web addresses, and addresses can carry login codes.
+          Before saving, Aura hides everything after a “?” or “#” in an address,
+          and anything that looks like a login token.
         </p>
       </Section>
 
       <Section title="What it is used for">
         <p>
-          Each moment is labelled Productive, Neutral, Distraction or Idle. Those labels become your focus score
-          and your charts. That is all. Aura does not sell your data and has no ads.
+          Each moment is labelled Productive, Neutral, Distraction or Idle.
+          Those labels become your focus score and your charts. That is all.
+          Aura does not sell your data and has no ads.
         </p>
       </Section>
 
       <Section title="Who can see it">
         <p>
-          You, when you are signed in: every request is checked against your account, and other Aura users cannot
-          see your data.
+          You, when you are signed in: every request is checked against your
+          account, and other Aura users cannot see your data.
         </p>
         <p>
-          Aura is run by one person, who can technically read the database it is stored in, like the owner of any
-          app.
+          Aura is run by one person, who can technically read the database it is
+          stored in, like the owner of any app.
         </p>
       </Section>
 
@@ -79,17 +89,20 @@ const Privacy = () => (
 
       <Section title="How long it is kept">
         <p>
-          Samples, with their window titles, are deleted automatically after {RAW_SAMPLE_DAYS} days.
+          Samples, with their window titles, are deleted automatically after{" "}
+          {RAW_SAMPLE_DAYS} days.
         </p>
         <p>
-          The daily summaries behind the Week, Month and 3-month charts are kept until you delete them. They hold only
-          counts, for each day, of time that was Productive, Neutral or a Distraction. They contain no titles, apps or
-          websites.
+          The daily summaries behind the Week, Month and 3-month charts are kept
+          until you delete them. They hold only counts, for each day, of time
+          that was Productive, Neutral or a Distraction. They contain no titles,
+          apps or websites.
         </p>
         <p>
-          The owner also keeps private backups of the database on their own computer, about one a week, and the 12
-          newest are kept (roughly 3 months). Data you delete can therefore stay in a backup until that backup is
-          replaced.
+          The owner also keeps private backups of the database on their own
+          computer, about one a week, and the 12 newest are kept (roughly 3
+          months). Data you delete can therefore stay in a backup until that
+          backup is replaced.
         </p>
       </Section>
 

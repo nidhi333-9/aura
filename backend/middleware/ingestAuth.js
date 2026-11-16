@@ -1,18 +1,11 @@
 const Device = require("../models/Device");
 const { sha256 } = require("../services/pairing");
 
-// Writing lastSeen on every 10-second sample would be a database write per sample just to
-// move a timestamp; once every 30 s is plenty for an online/offline indicator.
 const LAST_SEEN_WRITE_INTERVAL_MS = 30 * 1000;
 
 const OUT_OF_DATE =
   "This sensor is out of date. Open your Aura dashboard, use 'Connect a sensor', and run the new install command.";
 
-// Authentication for the sensor's POST /api/log-activity only:  Authorization: Device <key>
-// The key is looked up by its hash, so revoking a device takes effect on its very next sample.
-// A device key is deliberately NOT accepted by authMiddleware: it can post activity and nothing
-// else (it can't read data, list devices or mint codes). A login token is not accepted here at
-// all: sensors from before pairing existed used one, and they have to be reinstalled.
 const ingestAuth = async (req, res, next) => {
   const header = req.headers.authorization || "";
   if (!header.startsWith("Device ")) {
