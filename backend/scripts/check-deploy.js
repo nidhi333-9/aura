@@ -1,22 +1,7 @@
-// Is the live backend running the newest code on GitHub?
-//
-//   node scripts/check-deploy.js                      checks https://aura-backend-hmq3.onrender.com against the main branch
-//   node scripts/check-deploy.js --url https://...    another backend address
-//   node scripts/check-deploy.js --repo owner/name    another GitHub repository
-//   node scripts/check-deploy.js --commit abc1234     compare with this commit instead of asking GitHub
-//   node scripts/check-deploy.js --wait 600           keep checking (every --every seconds, default 10) until the
-//                                                     live backend runs the commit, for at most 600 seconds
-//
-// It asks the backend which commit it runs (GET /api/version) and GitHub which commit main is at, and
-// compares them. Exit code: 0 up to date, 1 behind or unknown, 2 could not check.
-// It only reads public pages and changes nothing. The CI workflow uses --commit and --wait right after
-// it asks Render to deploy, so a deploy that never goes live turns the run red.
-
 const DEFAULT_URL = "https://aura-backend-hmq3.onrender.com";
 const DEFAULT_REPO = "nidhi333-9/aura";
-const WAKE_UP_ALLOWANCE_MS = 90 * 1000; // a sleeping free-tier server can take about a minute
+const WAKE_UP_ALLOWANCE_MS = 90 * 1000;
 
-// live: what /api/version said (or null if it has no such page); latest: { sha, message } from GitHub.
 const judge = (live, latest) => {
   const newest = latest.sha.slice(0, 7);
   if (!live || typeof live.commit !== "string") {
@@ -56,11 +41,13 @@ const parseArgs = (argv) => {
     const raw = optionValue(argv, name, null);
     if (raw === null) return fallback;
     const value = Number(raw);
-    if (!Number.isFinite(value) || value < min) throw new Error(`${name} needs a number of at least ${min}`);
+    if (!Number.isFinite(value) || value < min)
+      throw new Error(`${name} needs a number of at least ${min}`);
     return value;
   };
   const commit = optionValue(argv, "--commit", null);
-  if (commit !== null && !/^[0-9a-f]{7,40}$/i.test(commit)) throw new Error("--commit needs a commit id (7 to 40 letters and digits)");
+  if (commit !== null && !/^[0-9a-f]{7,40}$/i.test(commit))
+    throw new Error("--commit needs a commit id (7 to 40 letters and digits)");
   return {
     url: optionValue(argv, "--url", DEFAULT_URL).replace(/\/+$/, ""),
     repo: optionValue(argv, "--repo", DEFAULT_REPO),
@@ -72,9 +59,10 @@ const parseArgs = (argv) => {
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
-// What the backend says it runs: an object, null if it has no such page, or throws if unreachable.
 const fetchLive = async (url, timeoutMs) => {
-  const res = await fetch(`${url}/api/version`, { signal: AbortSignal.timeout(timeoutMs) });
+  const res = await fetch(`${url}/api/version`, {
+    signal: AbortSignal.timeout(timeoutMs),
+  });
   if (res.ok) return res.json();
   if (res.status === 404 || res.status === 401) return null;
   throw new Error(`the backend answered HTTP ${res.status}`);
@@ -94,15 +82,28 @@ async function main() {
     latest = { sha: args.commit, message: "", asked: true };
   } else {
     try {
-      const res = await fetch(`https://api.github.com/repos/${args.repo}/commits/main`, {
-        headers: { Accept: "application/vnd.github+json", "User-Agent": "aura-check-deploy" },
-        signal: AbortSignal.timeout(20000),
-      });
+      const res = await fetch(
+        `https://api.github.com/repos/${args.repo}/commits/main`,
+        {
+          headers: {
+            Accept: "application/vnd.github+json",
+            "User-Agent": "aura-check-deploy",
+          },
+          signal: AbortSignal.timeout(20000),
+        },
+      );
       if (!res.ok) throw new Error(`GitHub answered HTTP ${res.status}`);
       const body = await res.json();
-      latest = { sha: body.sha, message: String(body.commit?.message ?? "").split("\n")[0].slice(0, 70) };
+      latest = {
+        sha: body.sha,
+        message: String(body.commit?.message ?? "")
+          .split("\n")[0]
+          .slice(0, 70),
+      };
     } catch (err) {
-      console.error(`Could not ask GitHub (${err.message}). Nothing was checked.`);
+      console.error(
+        `Could not ask GitHub (${err.message}). Nothing was checked.`,
+      );
       return process.exit(2);
     }
   }
@@ -121,18 +122,29 @@ async function main() {
       failure = err;
     }
     if (failure && !waiting) {
-      console.error(`Could not reach ${args.url} (${failure.message}). Nothing was checked.`);
+      console.error(
+        `Could not reach ${args.url} (${failure.message}). Nothing was checked.`,
+      );
       return process.exit(2);
     }
-    result = failure ? { verdict: "UNREACHABLE", exit: 1, text: `Could not reach ${args.url} (${failure.message}).` } : judge(live, latest);
+    result = failure
+      ? {
+          verdict: "UNREACHABLE",
+          exit: 1,
+          text: `Could not reach ${args.url} (${failure.message}).`,
+        }
+      : judge(live, latest);
     if (result.exit === 0 || !waiting || Date.now() >= deadline) break;
     const left = Math.max(0, Math.round((deadline - Date.now()) / 1000));
-    console.log(`[waiting, ${left}s left] ${result.verdict}: live runs ${live?.commit ?? "an unknown version"}, expecting ${latest.sha.slice(0, 7)}`);
+    console.log(
+      `[waiting, ${left}s left] ${result.verdict}: live runs ${live?.commit ?? "an unknown version"}, expecting ${latest.sha.slice(0, 7)}`,
+    );
     await sleep(args.everySeconds * 1000);
   }
 
   console.log(`${result.verdict}: ${result.text}`);
-  if (live?.started_at) console.log(`The live backend last started at ${live.started_at}.`);
+  if (live?.started_at)
+    console.log(`The live backend last started at ${live.started_at}.`);
   return process.exit(result.exit);
 }
 

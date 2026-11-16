@@ -8,16 +8,14 @@ function App() {
   const navigate = useNavigate();
   const { login, loading } = useAuth();
 
-  // Sensors from before device pairing opened this page with ?callback=http://localhost:... to log
-  // in. That way of connecting no longer exists, so say what to do instead of leaving the person
-  // wondering why nothing happens, and don't skip past this page.
-  const fromOldSensor = new URLSearchParams(window.location.search).has("callback");
+  const fromOldSensor = new URLSearchParams(window.location.search).has(
+    "callback",
+  );
 
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (!token || fromOldSensor) return;
 
-    // Only a 401 means the token is bad; a cold-start 502 or a 5xx says nothing about it.
     fetch(`${import.meta.env.VITE_API_URL}/auth/me`, {
       headers: { Authorization: `Bearer ${token}` },
     })
@@ -56,10 +54,12 @@ function App() {
             role="status"
             className="max-w-2xl mx-auto mb-10 px-5 py-4 rounded-2xl border bg-amber-50 text-amber-800 border-amber-200 text-sm font-medium text-left"
           >
-            <p className="font-bold">This link came from an old Aura sensor, which no longer works.</p>
+            <p className="font-bold">
+              This link came from an old Aura sensor, which no longer works.
+            </p>
             <p className="mt-1">
-              Sign in, open <b>Connect a sensor</b> on your dashboard, and run the new install command.
-              The old sensor can then be closed.
+              Sign in, open <b>Connect a sensor</b> on your dashboard, and run
+              the new install command. The old sensor can then be closed.
             </p>
           </div>
         )}
@@ -259,7 +259,10 @@ function App() {
       {/* 5. FOOTER */}
       <div className="w-full text-center text-xs text-gray-400 pb-8">
         Aura © 2026 ·{" "}
-        <a href="/privacy" className="underline underline-offset-4 hover:text-gray-600">
+        <a
+          href="/privacy"
+          className="underline underline-offset-4 hover:text-gray-600"
+        >
           Privacy
         </a>
       </div>

@@ -3,17 +3,17 @@ const mongoose = require("mongoose");
 const limits = require("../middleware/limits");
 const Activity = require("../models/Activity");
 const { buildHistory, windowDates } = require("../services/history");
-const { docsForRange, groupsFromDocs, rollupsReady } = require("../services/rollups");
+const {
+  docsForRange,
+  groupsFromDocs,
+  rollupsReady,
+} = require("../services/rollups");
 const { isValidTimeZone, zonedToUtc } = require("../services/tz");
 
 const RANGES = { "7d": 7, "30d": 30, "90d": 90 };
-// The raw-data path scans every sample in the window (current + previous period). That is fine
-// for a month, not for a quarter, so longer ranges need the rollups.
+
 const MAX_RAW_RANGE_DAYS = 30;
 
-// The raw samples, grouped in MongoDB by the user's local hour. Rows written before
-// classify-at-ingest have no stored category; for those the app/title are kept in the group key
-// so they are classified in JS instead of being dropped.
 const groupsFromRaw = (userId, from, to, tz) => {
   const unlabeled = { $in: [{ $type: "$category" }, ["missing", "null"]] };
   return Activity.aggregate([
@@ -26,7 +26,13 @@ const groupsFromRaw = (userId, from, to, tz) => {
     {
       $group: {
         _id: {
-          h: { $dateToString: { format: "%Y-%m-%dT%H", date: "$timestamp", timezone: tz } },
+          h: {
+            $dateToString: {
+              format: "%Y-%m-%dT%H",
+              date: "$timestamp",
+              timezone: tz,
+            },
+          },
           c: "$category",
           a: { $cond: [unlabeled, "$app_name", "$$REMOVE"] },
           t: { $cond: [unlabeled, "$window_title", "$$REMOVE"] },
@@ -68,7 +74,8 @@ router.get("/", limits.authed, async (req, res) => {
     const useRollups = await rollupsReady();
     if (!useRollups && days > MAX_RAW_RANGE_DAYS) {
       return res.status(503).json({
-        error: "Longer history isn't available yet. It switches on once your data has been summarised (see the README).",
+        error:
+          "Longer history isn't available yet. It switches on once your data has been summarised (see the README).",
       });
     }
 

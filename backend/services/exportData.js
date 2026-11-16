@@ -1,19 +1,7 @@
-// "Download my data": everything Aura holds about one person, as one JSON file.
-//
-// The raw samples can be tens of thousands of rows, so the file is produced as a stream: rows are
-// read from the database in batches and written out as they are read, and the server never holds
-// the whole file in memory. A slow download simply reads more slowly (the stream pushes back).
-//
-// What is in the file is chosen field by field below, never by copying a database document. A field
-// added to a model later therefore stays out of the download until someone decides it belongs in it.
-// Never included: the fingerprints of device keys, pairing codes, and internal database ids.
-
 const FORMAT_VERSION = 1;
-const FLUSH_AT_CHARS = 64 * 1024; // about this much text per piece of the response
+const FLUSH_AT_CHARS = 64 * 1024;
 const DB_BATCH = 1000;
 
-// An invalid or missing date becomes null instead of throwing: one damaged row must not abort a
-// download that is already under way.
 const iso = (value) => {
   if (!value) return null;
   const date = new Date(value);
@@ -58,9 +46,6 @@ const ABOUT = {
   ],
 };
 
-// Writes a stream of pieces of text. `rows` is a database cursor (an async iterable with close()).
-// Always closes the cursor, also when the reader gives up half way, because Mongoose's iterator does
-// not do that by itself.
 async function* rowsAsJson(rows, toRow, tally) {
   let first = true;
   let pending = "";
@@ -80,10 +65,13 @@ async function* rowsAsJson(rows, toRow, tally) {
   if (pending) yield pending;
 }
 
-// Pieces of the response, in order. `days` and `samples` are cursors over this person's rows.
-// The first piece is only released once the database has answered, so a database problem is still a
-// proper error response rather than a download that breaks half way.
-async function* exportPieces({ profile, devices, days, samples, now = new Date() }) {
+async function* exportPieces({
+  profile,
+  devices,
+  days,
+  samples,
+  now = new Date(),
+}) {
   const dayTally = { n: 0 };
   const sampleTally = { n: 0 };
   let carry =
@@ -104,9 +92,18 @@ async function* exportPieces({ profile, devices, days, samples, now = new Date()
     carry += `],"counts":{"daily_summaries":${dayTally.n},"samples":${sampleTally.n}}}\n`;
     yield carry;
   } finally {
-    // A cursor that was never reached (or was left half way) is closed here; closing twice is harmless.
-    await Promise.all([days, samples].map((c) => Promise.resolve(c.close?.()).catch(() => {})));
+    await Promise.all(
+      [days, samples].map((c) => Promise.resolve(c.close?.()).catch(() => {})),
+    );
   }
 }
 
-module.exports = { exportPieces, profileOf, deviceOf, dayOf, sampleOf, FORMAT_VERSION, DB_BATCH };
+module.exports = {
+  exportPieces,
+  profileOf,
+  deviceOf,
+  dayOf,
+  sampleOf,
+  FORMAT_VERSION,
+  DB_BATCH,
+};

@@ -1,19 +1,4 @@
-#!/bin/bash
-# A regular backup of the Aura database on THIS Mac, using launchd (macOS's built-in scheduler).
-#
-#   bash scripts/schedule-backup.sh install    set it up: every evening at 20:30 it checks the newest backup and
-#                                              makes a new one if that is 6 or more days old, so about weekly.
-#                                              A night the Mac was off or offline is simply tried again the
-#                                              next night, so a week is never skipped.
-#   bash scripts/schedule-backup.sh status     is it set up, did the last run work, how old is the newest backup
-#   bash scripts/schedule-backup.sh run-now    make a backup right now through the schedule, then show the log
-#   bash scripts/schedule-backup.sh remove     take the schedule away (existing backups stay)
-#   bash scripts/schedule-backup.sh print      show what `install` would write, and change nothing
-#
-# What it runs:  node scripts/backup.js --out ~/aura-backups --keep 12 --min-age-days 6
-# so the 12 newest backups are kept (about three months) and older ones are removed.
-# Backups are READ-only copies of the database, saved in ~/aura-backups (private to your user).
-# The log is ~/aura-backups/backup.log. The database password is never printed or logged.
+
 
 set -euo pipefail
 

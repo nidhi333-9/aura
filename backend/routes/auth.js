@@ -36,9 +36,13 @@ router.post("/google", limits.login, limits.loginFails, async (req, res) => {
         picture: user.picture,
       });
     }
-    const jwtToken = jwt.sign({ id: existingUser._id }, process.env.JWT_SECRET, {
-      expiresIn: "7d",
-    });
+    const jwtToken = jwt.sign(
+      { id: existingUser._id },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: "7d",
+      },
+    );
     res.json({ user: existingUser, token: jwtToken });
   } catch (err) {
     console.error("GOOGLE ERROR FULL:", err.response?.data);
@@ -46,9 +50,6 @@ router.post("/google", limits.login, limits.loginFails, async (req, res) => {
   }
 });
 
-// Lightweight token check for the sensor and landing page: 200 if the token is
-// valid and the user still exists, 401 otherwise. Replaces using GET /dashboard
-// (which returns up to 500 activity rows) just to validate a token.
 router.get("/me", limits.authed, async (req, res) => {
   try {
     const user = await User.findById(req.user.id);

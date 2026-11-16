@@ -3,8 +3,6 @@ const axios = require("axios");
 const limits = require("../middleware/limits");
 const router = express.Router();
 
-// One entry per known type, refreshed at most once an hour. Every search costs 100 of the daily
-// YouTube quota, so nobody may trigger more than three of them an hour (see the type check below).
 const cache = {};
 const lastFetch = {};
 
@@ -16,12 +14,12 @@ const queries = {
   boost: "motivation music",
 };
 
-// Signed-in people only, and only the three known types: an unknown type used to cost a search
-// (and a cache entry that was never freed) for every distinct value anyone made up.
 router.get("/youtube-recommendation", limits.authed, async (req, res) => {
   const { type } = req.query;
   if (typeof type !== "string" || !Object.hasOwn(queries, type)) {
-    return res.status(400).json({ error: "type must be focus, relax or boost" });
+    return res
+      .status(400)
+      .json({ error: "type must be focus, relax or boost" });
   }
 
   // 1. Check Cache First

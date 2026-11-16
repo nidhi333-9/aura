@@ -18,12 +18,9 @@ const {
 // Configurable so the expiry can be exercised in tests without waiting ten minutes.
 const PAIR_CODE_TTL_SECONDS = Number(process.env.PAIR_CODE_TTL_SECONDS) || 600;
 const MAX_ACTIVE_DEVICES = 10;
-const INVALID_CODE = "That pairing code is invalid or has expired. Generate a new one from your dashboard.";
+const INVALID_CODE =
+  "That pairing code is invalid or has expired. Generate a new one from your dashboard.";
 
-// --- dashboard (user session) ---------------------------------------------------------
-
-// Mint a code for the logged-in user. One live code per user: asking for a new one
-// invalidates the previous one.
 router.post("/pair-code", limits.authed, async (req, res) => {
   try {
     if (!(await User.exists({ _id: req.user.id }))) {
@@ -45,7 +42,7 @@ router.post("/pair-code", limits.authed, async (req, res) => {
           expires_in: PAIR_CODE_TTL_SECONDS,
         });
       } catch (err) {
-        if (err.code !== 11000) throw err; // duplicate hash: astronomically unlikely, just retry
+        if (err.code !== 11000) throw err;
       }
     }
     throw new Error("could not allocate a pairing code");
@@ -68,7 +65,8 @@ router.get("/", limits.authed, async (req, res) => {
         os: d.os || null,
         created_at: d.createdAt.toISOString(),
         last_seen: d.lastSeen ? d.lastSeen.toISOString() : null,
-        online: !!d.lastSeen && now - d.lastSeen.getTime() <= SENSOR_ONLINE_WITHIN_MS,
+        online:
+          !!d.lastSeen && now - d.lastSeen.getTime() <= SENSOR_ONLINE_WITHIN_MS,
       })),
     });
   } catch (err) {
@@ -77,14 +75,16 @@ router.get("/", limits.authed, async (req, res) => {
   }
 });
 
-// Revoke: the device's key stops working on its next request. Idempotent.
 router.delete("/:id", limits.authed, async (req, res) => {
   try {
     if (!mongoose.isValidObjectId(req.params.id)) {
       return res.status(404).json({ error: "Device not found" });
     }
     const filter = { _id: req.params.id, user: req.user.id };
-    await Device.updateOne({ ...filter, revokedAt: null }, { $set: { revokedAt: new Date() } });
+    await Device.updateOne(
+      { ...filter, revokedAt: null },
+      { $set: { revokedAt: new Date() } },
+    );
     if (!(await Device.exists(filter))) {
       return res.status(404).json({ error: "Device not found" });
     }
@@ -117,9 +117,15 @@ router.post("/pair", limits.pair, limits.pairFails, async (req, res) => {
       return res.status(400).json({ error: INVALID_CODE });
     }
 
-    const active = await Device.countDocuments({ user: claimed.user, revokedAt: null });
+    const active = await Device.countDocuments({
+      user: claimed.user,
+      revokedAt: null,
+    });
     if (active >= MAX_ACTIVE_DEVICES) {
-      await PairingCode.updateOne({ _id: claimed._id }, { $set: { usedAt: null } });
+      await PairingCode.updateOne(
+        { _id: claimed._id },
+        { $set: { usedAt: null } },
+      );
       return res.status(409).json({
         error: `You already have ${MAX_ACTIVE_DEVICES} paired devices. Remove one in your dashboard, then try again.`,
       });
@@ -133,14 +139,22 @@ router.post("/pair", limits.pair, limits.pairFails, async (req, res) => {
       keyHash: sha256(deviceKey),
     });
     // The key is returned exactly once; only its hash is stored.
-    res.json({ device_key: deviceKey, device: { id: String(device._id), name: device.name } });
+    res.json({
+      device_key: deviceKey,
+      device: { id: String(device._id), name: device.name },
+    });
   } catch (err) {
     console.error("PAIR ERROR:", err.message);
     if (claimed) {
       // Don't burn the user's code over a server hiccup.
-      await PairingCode.updateOne({ _id: claimed._id }, { $set: { usedAt: null } }).catch(() => {});
+      await PairingCode.updateOne(
+        { _id: claimed._id },
+        { $set: { usedAt: null } },
+      ).catch(() => {});
     }
-    res.status(500).json({ error: "Could not pair this device. Please try again." });
+    res
+      .status(500)
+      .json({ error: "Could not pair this device. Please try again." });
   }
 });
 

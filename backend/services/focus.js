@@ -1,12 +1,3 @@
-// Scoring for the dashboard. Pure functions over activity rows so they can be tested
-// without a database.
-//
-// Definitions (the one place they live):
-//   - Each row is one ~10 s sample of the active window.
-//   - "Idle" samples (Desktop/Unknown) are ignored entirely.
-//   - focus score = Productive samples / non-idle samples, as a whole percent.
-//   - state is derived from the score here, once, so the UI never has its own thresholds.
-
 const { classify, appKey, CATEGORIES } = require("./classify");
 const { localDate, zonedToUtc } = require("./tz");
 
@@ -14,13 +5,17 @@ const LIVE_WINDOW_MINUTES = 30;
 const SENSOR_ONLINE_WITHIN_MS = 60 * 1000; // sensor posts every 10 s; allow a few misses
 const TOP_SITES_LIMIT = 10;
 
-// A macOS sensor without the Accessibility/Automation permissions still knows WHICH app is in
-// front but reports every window title as "Unknown". Flag it when nearly all recent samples are
-// like that, so the dashboard can tell the user what to allow instead of showing a silent mess.
 const TITLE_CHECK_MIN_SAMPLES = 6; // about a minute of use
 const TITLE_CHECK_UNREADABLE_SHARE = 0.8;
-// Apps that legitimately have no window title (or no app at all): never evidence either way.
-const TITLELESS_APPS = new Set(["unknown", "desktop", "finder", "explorer", "lockapp", "loginwindow"]);
+
+const TITLELESS_APPS = new Set([
+  "unknown",
+  "desktop",
+  "finder",
+  "explorer",
+  "lockapp",
+  "loginwindow",
+]);
 
 const STATES = {
   deep_focus: { key: "deep_focus", label: "Deep Focus" },
@@ -35,8 +30,6 @@ const stateFor = (score) => {
   return STATES.low_energy;
 };
 
-// Use the label stored at ingest; rows written before that existed (or with an unknown
-// category) are classified on the fly so they never silently drop out of the numbers.
 const labelOf = (row) =>
   row.site && CATEGORIES.includes(row.category)
     ? { site: row.site, category: row.category }
@@ -46,7 +39,9 @@ const percent = (part, whole) => Math.round((part / whole) * 100);
 
 const titlesUnreadable = (rows) => {
   const evidence = rows.filter(
-    (row) => typeof row.window_title === "string" && !TITLELESS_APPS.has(appKey(row.app_name)),
+    (row) =>
+      typeof row.window_title === "string" &&
+      !TITLELESS_APPS.has(appKey(row.app_name)),
   );
   if (evidence.length < TITLE_CHECK_MIN_SAMPLES) return false;
   const unreadable = evidence.filter((row) => {
@@ -56,8 +51,6 @@ const titlesUnreadable = (rows) => {
   return unreadable / evidence.length >= TITLE_CHECK_UNREADABLE_SHARE;
 };
 
-// rows: samples inside the live window, newest first.
-// lastSeenAt: timestamp of the newest sample ever stored for the user (any category).
 const buildLive = (rows, lastSeenAt, now = Date.now()) => {
   const lastSeenMs = lastSeenAt ? new Date(lastSeenAt).getTime() : null;
   const sensor = {
@@ -86,7 +79,9 @@ const buildLive = (rows, lastSeenAt, now = Date.now()) => {
     state: stateFor(focusScore),
     current_app: active.length ? active[0].site : null,
     top_sites: Object.fromEntries(
-      [...sites.entries()].sort((a, b) => b[1] - a[1]).slice(0, TOP_SITES_LIMIT),
+      [...sites.entries()]
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, TOP_SITES_LIMIT),
     ),
     app_distribution: counts,
     total_logs: active.length,
@@ -95,14 +90,15 @@ const buildLive = (rows, lastSeenAt, now = Date.now()) => {
   };
 };
 
-// 24 hourly buckets for the current calendar day in `tz`. An hour with no (non-idle)
-// samples is `null`, not 0, so "no data" is never drawn as "0% focus".
 const buildHourlyTrend = (rows, tz, now = new Date()) => {
   const { y, m, d } = localDate(now, tz);
   const starts = Array.from({ length: 25 }, (_, h) =>
     zonedToUtc(y, m, d, h, tz).getTime(),
   );
-  const buckets = Array.from({ length: 24 }, () => ({ active: 0, productive: 0 }));
+  const buckets = Array.from({ length: 24 }, () => ({
+    active: 0,
+    productive: 0,
+  }));
 
   for (const row of rows) {
     const t = new Date(row.timestamp).getTime();

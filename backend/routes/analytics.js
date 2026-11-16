@@ -5,9 +5,6 @@ const limits = require("../middleware/limits");
 const { buildHourlyTrend } = require("../services/focus");
 const { isValidTimeZone, localDate, zonedToUtc } = require("../services/tz");
 
-// Today's focus by hour in the caller's time zone (?tz=Asia/Kolkata, default UTC for
-// older clients). Computed from MongoDB with the same rules as /api/live, so the chart
-// and the score card can't disagree. Hours with no activity are `null`, not 0.
 router.get("/daily-trend", limits.authed, async (req, res) => {
   const tz = req.query.tz === undefined ? "UTC" : req.query.tz;
   if (!isValidTimeZone(tz)) {

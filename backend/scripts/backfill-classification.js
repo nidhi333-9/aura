@@ -1,12 +1,3 @@
-// Labels existing activity rows with { site, category }: what POST /api/log-activity now
-// does for every new row. Run it once after deploying the classify-at-ingest change.
-//
-//   node scripts/backfill-classification.js                  dry run: shows what would change
-//   node scripts/backfill-classification.js --apply          writes the labels
-//   node scripts/backfill-classification.js --apply --force  relabels EVERY row (after editing a rule)
-//
-// Safe to re-run: without --force it only touches rows that are missing a label.
-
 require("../config/env")(); // .env.local > .env
 const mongoose = require("mongoose");
 const Activity = require("../models/Activity");
@@ -43,7 +34,15 @@ async function main() {
 
   // Native driver on purpose: no per-document casting overhead for a one-off job.
   const cursor = Activity.collection
-    .find(filter, { projection: { app_name: 1, window_title: 1, domain: 1, site: 1, category: 1 } })
+    .find(filter, {
+      projection: {
+        app_name: 1,
+        window_title: 1,
+        domain: 1,
+        site: 1,
+        category: 1,
+      },
+    })
     .sort({ _id: 1 });
 
   const byCategory = {};
@@ -59,7 +58,9 @@ async function main() {
   const flush = async () => {
     if (!ops.length) return;
     if (apply) {
-      const result = await Activity.collection.bulkWrite(ops, { ordered: false });
+      const result = await Activity.collection.bulkWrite(ops, {
+        ordered: false,
+      });
       written += result.modifiedCount;
     }
     ops = [];
@@ -71,7 +72,11 @@ async function main() {
       skipped += 1;
       continue;
     }
-    const { site, category } = classify(doc.app_name, doc.window_title, doc.domain);
+    const { site, category } = classify(
+      doc.app_name,
+      doc.window_title,
+      doc.domain,
+    );
     byCategory[category] = (byCategory[category] || 0) + 1;
     if (doc.category && doc.category !== category) {
       const move = `${doc.category} -> ${category}`;
@@ -80,24 +85,36 @@ async function main() {
       movedNames.set(name, (movedNames.get(name) || 0) + 1);
     }
     ops.push({
-      updateOne: { filter: { _id: doc._id }, update: { $set: { site, category } } },
+      updateOne: {
+        filter: { _id: doc._id },
+        update: { $set: { site, category } },
+      },
     });
     if (ops.length >= BATCH_SIZE) await flush();
     if (seen % 50000 === 0) console.log(`  ...${seen}/${total}`);
   }
   await flush();
 
-  console.log(`Scanned ${seen} rows${skipped ? `, skipped ${skipped} without an app_name` : ""}.`);
+  console.log(
+    `Scanned ${seen} rows${skipped ? `, skipped ${skipped} without an app_name` : ""}.`,
+  );
   console.log("Category breakdown:", byCategory);
   if (Object.keys(moves).length) {
     console.log("Rows whose category changes:", moves);
-    const top = [...movedNames.entries()].sort((a, b) => b[1] - a[1]).slice(0, 25);
+    const top = [...movedNames.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 25);
     console.log("Biggest changes (rows, from -> to: app or site):");
-    for (const [name, count] of top) console.log(`  ${String(count).padStart(6)}  ${name}`);
+    for (const [name, count] of top)
+      console.log(`  ${String(count).padStart(6)}  ${name}`);
   } else if (force) {
     console.log("No row changes category.");
   }
-  console.log(apply ? `Updated ${written} rows.` : "Dry run only. Re-run with --apply to write.");
+  console.log(
+    apply
+      ? `Updated ${written} rows.`
+      : "Dry run only. Re-run with --apply to write.",
+  );
   process.exit(0);
 }
 
